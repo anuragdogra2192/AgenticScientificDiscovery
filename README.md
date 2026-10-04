@@ -294,6 +294,20 @@ AgenticScientificDiscovery/
 - [ ] WebUI
 - [ ] Real experiment runner (lab hardware integration)
 
+## 📚 References
+
+### Primary Research Foundation
+
+**Zheng X, Av-Gay Y.** System for Efficacy and Cytotoxicity Screening of Inhibitors Targeting Intracellular Mycobacterium tuberculosis. *J Vis Exp*. 2017 Apr 5;(122):55273. doi: 10.3791/55273. PMID: 28448028; PMCID: PMC5564477.
+
+**Relevance**: This paper establishes the gold-standard BSL-3 in vitro assay protocols for Mycobacterium tuberculosis drug screening, including:
+- MIC (Minimum Inhibitory Concentration) testing methodology
+- THP-1 macrophage-based intracellular survival assays
+- Cytotoxicity assessment for Selectivity Index (SI) calculation
+- Control strain: Mtb H37Rv
+
+Our Agentic Scientific Discovery Lab uses these protocols as the baseline for experiment design, result interpretation, and hypothesis validation in the Mtb drug discovery pipeline.
+
 ## 📄 License
 
 MIT License - Use freely for your hackathon and beyond!
