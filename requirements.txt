@@ -1,6 +1,25 @@
+# Core HTTP and async libraries
 httpx==0.25.2
+aiohttp==3.9.1
+
+# Configuration and environment management
 pyyaml==6.0.1
 python-dotenv==1.0.0
-aiohttp==3.9.1
+
+# Literature search and metadata
 feedparser==6.0.10
 scholarly==1.7.11
+requests==2.34.2
+
+# AI/ML - Claude Haiku 4.5 integration
+anthropic==1.11.0
+
+# Web UI - Gradio interface
+gradio==6.29.1
+
+# Data processing and analysis
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Additional utilities
+typing-extensions>=4.5.0
