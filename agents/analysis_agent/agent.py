@@ -246,6 +246,18 @@ class AnalysisAgent:
         self.reports: dict[str, AnalysisReport] = {}
         self.report_counter = 0
 
+        # Initialize Claude client if API key available
+        self.use_claude = False
+        self.claude_client = None
+        if ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                self.claude_client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+                self.use_claude = True
+                logger.info("Claude Haiku API initialized for result analysis")
+            except Exception as e:
+                logger.warning(f"Could not initialize Claude API: {e}. Falling back to rule-based analysis.")
+                self.use_claude = False
+
     async def analyze_results(
         self,
         experiment_design: dict,

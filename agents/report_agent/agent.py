@@ -3,12 +3,20 @@
 import asyncio
 import json
 import logging
+import re
+import os
 from dataclasses import dataclass, asdict, field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
 import yaml
+
+try:
+    from anthropic import Anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +192,18 @@ class ReportAgent:
 
         self.papers: dict[str, ResearchPaper] = {}
         self.paper_counter = 0
+
+        # Initialize Claude client if API key available
+        self.use_claude = False
+        self.claude_client = None
+        if ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                self.claude_client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+                self.use_claude = True
+                logger.info("Claude Haiku API initialized for report generation")
+            except Exception as e:
+                logger.warning(f"Could not initialize Claude API: {e}. Falling back to rule-based generation.")
+                self.use_claude = False
 
     async def generate_paper(
         self,
