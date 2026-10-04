@@ -47,7 +47,7 @@ Designs rigorous BSL-3 experimental protocols using Claude Haiku 4.5.
 **Status**: Fully implemented with Claude integration and graceful fallback
 **[Learn more →](agents/experiment_agent/README.md)**
 
-### 4. 📊 **Analysis Agent** (✅ Live)
+### 4. 📊 **Analysis Agent** (✅ Available)
 Analyzes experimental results and extracts insights using Claude Haiku 4.5.
 - Statistical significance testing (t-tests, ANOVA, Mann-Whitney U)
 - MIC reduction and Selectivity Index (SI) interpretation
@@ -55,7 +55,7 @@ Analyzes experimental results and extracts insights using Claude Haiku 4.5.
 - Comparison with literature findings
 - Implications for in vivo testing
 
-### 5. 📝 **Report Agent** (✅ Live)
+### 5. 📝 **Report Agent** (✅ Available)
 Synthesizes findings into publication-ready research papers using Claude.
 - APA-formatted paper generation
 - Structures results into paper sections (Abstract, Methods, Results, Discussion)
@@ -63,7 +63,7 @@ Synthesizes findings into publication-ready research papers using Claude.
 - Exports to Markdown, JSON, and HTML formats
 - Identifies follow-up research directions
 
-### 6. 🧬 **Knowledge Graph Agent** (✅ Live)
+### 6. 🧬 **Knowledge Graph Agent** (✅ Available)
 Extracts semantic relationships from discoveries.
 - Entity extraction (targets, compounds, findings, diseases)
 - Relationship mapping (targets, inhibits, associates_with, etc.)
@@ -71,7 +71,7 @@ Extracts semantic relationships from discoveries.
 - Integrates with external knowledge bases
 - Enables future refinement and cross-linking
 
-### 7. 📋 **Experiment Planner Agent** (✅ Live)
+### 7. 📋 **Experiment Planner Agent** (✅ Available)
 Designs multi-protocol comparative experiments.
 - Comparative protocol design for complex hypotheses
 - Protocol selection and optimization
@@ -79,7 +79,7 @@ Designs multi-protocol comparative experiments.
 - Supports 3-5 parallel experimental approaches
 - Validates comparative design rigor
 
-### 8. 🏃 **Experiment Runner Agent** (✅ Live)
+### 8. 🏃 **Experiment Runner Agent** (✅ Available)
 Executes and monitors experimental protocols.
 - Protocol step execution tracking
 - Real-time result monitoring (when connected to lab hardware)
