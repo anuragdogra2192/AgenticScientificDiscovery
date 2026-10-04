@@ -1,0 +1,374 @@
+name: Report Agent
+description: Generate publication-ready research reports and knowledge representations
+version: "1.0.0"
+
+# Core agent configuration
+agent:
+  type: specialist
+  role: research_communicator
+  capabilities:
+    - paper_generation
+    - section_composition
+    - citation_management
+    - figure_table_generation
+    - visualization_planning
+    - knowledge_graph_export
+    - format_conversion
+
+# Paper structure and sections
+paper_structure:
+
+  front_matter:
+    title:
+      max_length: 120
+      style: Clear, descriptive, engaging
+    abstract:
+      max_words: 250
+      sections:
+        - background
+        - research_question
+        - methods
+        - results
+        - conclusions
+    keywords:
+      count: 5-8
+      source: Extracted from paper
+
+  main_sections:
+
+    introduction:
+      purpose: Establish context and motivation
+      typical_length: 800-1500
+      elements:
+        - Background on topic
+        - Literature overview
+        - Existing gaps
+        - Research question
+        - Hypothesis statement
+        - Significance statement
+
+    methodology:
+      purpose: Enable replication
+      typical_length: 1000-2000
+      elements:
+        - Study design rationale
+        - Sample characteristics
+        - Measures and instruments
+        - Procedures
+        - Statistical analysis plan
+        - Data quality procedures
+
+    results:
+      purpose: Present findings objectively
+      typical_length: 1000-1500
+      elements:
+        - Sample description
+        - Preliminary analyses
+        - Primary results
+        - Effect sizes and CI
+        - Secondary findings
+        - Sensitivity analyses
+
+    discussion:
+      purpose: Interpret and contextualize
+      typical_length: 1500-2500
+      elements:
+        - Summary of findings
+        - Literature comparison
+        - Theoretical implications
+        - Practical applications
+        - Limitations
+        - Future research
+
+    conclusion:
+      purpose: Synthesize and impact
+      typical_length: 200-400
+      elements:
+        - Key takeaways
+        - Broader significance
+        - Call to action
+
+    references:
+      style: APA 7th edition
+      elements:
+        - Cited papers
+        - Related works
+        - Methodology references
+
+  back_matter:
+    supplementary_materials:
+      - Additional analyses
+      - Extended tables
+      - Questionnaires
+      - Code and data
+
+    appendices:
+      - Detailed protocols
+      - Additional figures
+      - Extended methods
+
+# Citation management
+citation_management:
+
+  styles:
+    apa:
+      version: 7th edition
+      url_in_text: true
+      doi_format: https://doi.org/[DOI]
+
+    chicago:
+      version: 17th edition
+      notes_bibliography: true
+
+    harvard:
+      style: Author-date
+
+    mla:
+      version: 9th edition
+
+  citation_sources:
+    - Author name
+    - Publication year
+    - Title
+    - Journal/Source
+    - DOI
+    - URL
+
+  in_text_formats:
+    paraphrase: (Author, Year)
+    direct_quote: (Author, Year, p. X)
+    multiple_authors: (Author et al., Year)
+
+# Figure and table generation
+visualizations:
+
+  figure_types:
+
+    descriptive:
+      - means_error_bars
+      - box_plots
+      - violin_plots
+      - distributions
+      - scatter_plots
+      - trend_lines
+
+    inferential:
+      - confidence_intervals
+      - forest_plots
+      - effect_sizes
+      - interactions
+      - contrasts
+
+    comparative:
+      - group_comparisons
+      - before_after
+      - time_series
+      - mixed_designs
+
+    data_visualization:
+      - heatmaps
+      - network_diagrams
+      - flow_charts
+      - concept_maps
+
+  table_types:
+    - sample_characteristics
+    - descriptive_statistics
+    - correlation_matrix
+    - statistical_results
+    - model_comparisons
+    - subgroup_analyses
+    - sensitivity_analyses
+
+  figure_specifications:
+    resolution: 300 DPI minimum
+    format: PNG or PDF
+    dimensions: Suitable for journal
+    caption_max_words: 200
+    title_max_words: 20
+
+# Output formats
+output_formats:
+
+  markdown:
+    features:
+      - Full formatting support
+      - Reference links
+      - Citation integration
+      - Table support
+      - Figure references
+
+  html:
+    features:
+      - Interactive elements
+      - Embedded visualizations
+      - Responsive design
+      - Citation hyperlinks
+
+  pdf:
+    features:
+      - Professional layout
+      - Proper pagination
+      - Citation formatting
+      - Embedded figures
+
+  json_export:
+    features:
+      - Structured data
+      - Citation objects
+      - Metadata
+      - Figure specifications
+
+  bibtex:
+    format: BibTeX reference list
+    for_citation_managers: true
+
+# Knowledge graph representation
+knowledge_graph:
+
+  entities:
+    - research_question
+    - hypothesis
+    - methodology
+    - finding
+    - evidence
+    - mechanism
+    - boundary_condition
+    - implication
+    - future_direction
+
+  relationships:
+    - addresses         # Hypothesis addresses gap
+    - tested_by         # Finding tests hypothesis
+    - supports          # Evidence supports finding
+    - contradicts       # Finding contradicts theory
+    - enables           # Finding enables future work
+    - qualifies         # Boundary condition qualifies finding
+    - implies           # Finding implies application
+    - extends           # Work extends theory
+    - predicts          # Theory predicts finding
+
+  properties:
+    - confidence_level
+    - evidence_strength
+    - applicability_scope
+    - novelty_level
+    - theoretical_grounding
+
+  export_formats:
+    - rdf_xml
+    - turtle
+    - json_ld
+    - cytoscape_json
+
+# Supplementary materials
+supplementary_materials:
+
+  data:
+    - Raw datasets (anonymized)
+    - Analysis scripts
+    - Documentation
+
+  extended_analyses:
+    - Additional statistics
+    - Robustness checks
+    - Power analyses
+    - Additional figures
+
+  methodological:
+    - Detailed protocols
+    - Instrument documentation
+    - Coding schemes
+    - Validation evidence
+
+  materials:
+    - Stimuli used
+    - Questionnaires
+    - Instructions
+    - Consent forms
+
+# Writing quality standards
+quality_standards:
+
+  clarity:
+    - Active voice preferred
+    - Clear sentence structure
+    - Defined jargon
+    - Logical flow
+
+  accuracy:
+    - Correct statistics
+    - Proper citations
+    - Accurate paraphrasing
+    - Precise terminology
+
+  completeness:
+    - All methods specified
+    - All results reported
+    - All findings discussed
+    - All references included
+
+  consistency:
+    - Consistent terminology
+    - Consistent formatting
+    - Consistent citation style
+    - Consistent tone
+
+# Submission requirements
+submission_requirements:
+
+  hackathon:
+    max_pages: 20
+    format: PDF
+    include: Abstract, methodology, results, discussion
+    supplementary: Yes
+    code: Yes, with documentation
+
+  journal:
+    max_words: 8000
+    format: Manuscript
+    sections: Full paper
+    references: Extensive
+    figures: 4-6
+
+  conference:
+    max_pages: 8
+    format: Camera-ready
+    sections: Core results
+    figures: 2-4
+    proceedings_style: ACM or IEEE
+
+# Metadata and headers
+metadata:
+
+  document_properties:
+    - Title
+    - Authors
+    - Affiliations
+    - Date
+    - Keywords
+    - Word count
+
+  author_information:
+    - Name
+    - Affiliation
+    - Email
+    - ORCID
+    - Contribution statement
+
+  funding_disclosure:
+    - Funding sources
+    - Grant numbers
+    - Acknowledgments
+
+  conflict_of_interest:
+    - Declarations
+    - Disclosures
+
+# Monitoring and logging
+monitoring:
+  log_level: INFO
+  track_citations: true
+  track_sections: true
+  track_quality_metrics: true
+  validate_references: true
