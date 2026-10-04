@@ -4,12 +4,20 @@ import asyncio
 import json
 import logging
 import math
+import re
+import os
 from dataclasses import dataclass, asdict, field
 from typing import Optional
 from enum import Enum
 from datetime import datetime, timedelta
 
 import yaml
+
+try:
+    from anthropic import Anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -215,9 +223,39 @@ class ExperimentAgent:
         self.designs: dict[str, ExperimentalDesign] = {}
         self.design_counter = 0
 
+        # Initialize Claude client if API key available
+        self.use_claude = False
+        self.claude_client = None
+        if ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                self.claude_client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+                self.use_claude = True
+                logger.info("Claude Haiku API initialized for experiment design")
+            except Exception as e:
+                logger.warning(f"Could not initialize Claude API: {e}. Falling back to rule-based design.")
+                self.use_claude = False
+        elif ANTHROPIC_AVAILABLE:
+            logger.warning("ANTHROPIC_API_KEY not set. Falling back to rule-based experiment design.")
+        else:
+            logger.warning("anthropic library not installed. Using rule-based experiment design.")
+
     async def design_experiment(self, hypothesis: dict) -> ExperimentalDesign:
-        """Design an experiment to test a hypothesis."""
+        """Design an experiment to test a hypothesis using Claude or rule-based fallback."""
         logger.info(f"Designing experiment for hypothesis: {hypothesis.get('title')}")
+
+        # Try Claude first if available
+        if self.use_claude and self.claude_client:
+            try:
+                logger.info("Using Claude Haiku for experiment design")
+                design = await self._design_with_claude(hypothesis)
+                logger.info(f"Claude designed experiment with budget: ${design.total_cost:,.0f}")
+                return design
+            except Exception as e:
+                logger.warning(f"Claude design failed: {e}. Falling back to rule-based.")
+                self.use_claude = False
+
+        # Fallback: Rule-based design
+        logger.info("Using rule-based experiment design")
 
         # Select appropriate experiment type
         experiment_type = self._select_experiment_type(hypothesis)
@@ -919,6 +957,141 @@ Total Estimated Cost: ${design.total_cost:,.0f}
             doc += f"- {equipment}\n"
 
         return doc
+
+    async def _design_with_claude(self, hypothesis: dict) -> ExperimentalDesign:
+        """Design an experiment using Claude Haiku API."""
+        # Prepare prompt for Claude
+        prompt = f"""You are an expert research methodology specialist. Design a rigorous experiment to test this hypothesis.
+
+HYPOTHESIS: {hypothesis.get('title')}
+STATEMENT: {hypothesis.get('statement')}
+BACKGROUND: {hypothesis.get('background', '')}
+
+VARIABLES:
+Independent: {hypothesis.get('independent_variables', [])}
+Dependent: {hypothesis.get('dependent_variables', [])}
+Control: {hypothesis.get('control_variables', [])}
+
+Design an experiment with:
+1. Clear experimental type (randomized_controlled_trial, laboratory_experiment, simulation, etc.)
+2. Appropriate sample size and characteristics
+3. Detailed procedures and measurements
+4. Realistic timeline and budget estimation
+5. Identified datasets or resources needed
+
+Return ONLY valid JSON with this structure (no other text):
+{{
+  "experiment_type": "laboratory_experiment|randomized_controlled_trial|simulation|...",
+  "title": "Clear experiment title",
+  "sample_size": 120,
+  "duration_weeks": 12,
+  "total_budget": 45000,
+  "primary_measures": [
+    {{"name": "measure_name", "method": "measurement method", "timing": "when measured"}}
+  ],
+  "secondary_measures": [
+    {{"name": "measure_name", "method": "measurement method", "timing": "when measured"}}
+  ],
+  "procedures": [
+    {{"phase": "Phase name", "description": "What happens", "duration": "Time"}}
+  ],
+  "groups": [
+    {{"name": "Treatment", "description": "What group receives", "n": 60}}
+  ],
+  "datasets_required": ["Dataset 1", "Dataset 2"],
+  "equipment_needed": ["Equipment 1"],
+  "potential_risks": ["Risk 1", "Risk 2"],
+  "mitigation_strategies": ["Mitigation 1"],
+  "success_prediction_probability": 0.68
+}}"""
+
+        # Call Claude
+        response = self.claude_client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        # Parse response
+        response_text = response.content[0].text
+        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        if not json_match:
+            raise ValueError("Claude did not return valid JSON")
+
+        design_data = json.loads(json_match.group())
+
+        # Convert to ExperimentalDesign object
+        experiment_type = ExperimentType(design_data.get("experiment_type", "laboratory_experiment"))
+
+        design = ExperimentalDesign(
+            id=f"claude_exp_{self.design_counter}",
+            hypothesis_id=hypothesis.get("id", "unknown"),
+            experiment_type=experiment_type,
+            rigor_level=RigorLevel.HIGH,
+            title=design_data.get("title", "Experiment"),
+            design_description=f"Experiment designed by Claude: {design_data.get('title')}",
+            variables={},
+            sample_size=int(design_data.get("sample_size", 100)),
+            sample_characteristics="Specified in procedures",
+            groups=[
+                Group(
+                    name=g.get("name", "Group"),
+                    description=g.get("description", ""),
+                    n=int(g.get("n", 50)),
+                )
+                for g in design_data.get("groups", [])
+            ],
+            treatment_description="See procedures",
+            control_description="See procedures",
+            primary_measures=[
+                Measurement(
+                    name=m.get("name", ""),
+                    construct=m.get("name", ""),
+                    method=m.get("method", ""),
+                    timing=m.get("timing", ""),
+                    expected_reliability=0.8,
+                )
+                for m in design_data.get("primary_measures", [])
+            ],
+            secondary_measures=[
+                Measurement(
+                    name=m.get("name", ""),
+                    construct=m.get("name", ""),
+                    method=m.get("method", ""),
+                    timing=m.get("timing", ""),
+                    expected_reliability=0.7,
+                )
+                for m in design_data.get("secondary_measures", [])
+            ],
+            measurement_schedule="As specified in procedures",
+            procedures=[
+                Procedure(
+                    phase=p.get("phase", ""),
+                    description=p.get("description", ""),
+                    duration=p.get("duration", ""),
+                    personnel_required="Research team",
+                )
+                for p in design_data.get("procedures", [])
+            ],
+            duration_weeks=int(design_data.get("duration_weeks", 12)),
+            datasets_required=design_data.get("datasets_required", []),
+            budget=design_data.get("total_budget", 50000),
+            total_cost=float(design_data.get("total_budget", 50000)),
+            equipment_needed=design_data.get("equipment_needed", []),
+            potential_risks=design_data.get("potential_risks", []),
+            mitigation_strategies=design_data.get("mitigation_strategies", []),
+            success_prediction=SuccessPrediction(
+                probability_success=float(design_data.get("success_prediction_probability", 0.65)),
+                confidence_level=0.7,
+                reasoning="Determined by Claude analysis",
+            ),
+            created_at=datetime.now().isoformat(),
+        )
+
+        self.design_counter += 1
+        return design
 
     async def close(self) -> None:
         """Clean up resources."""

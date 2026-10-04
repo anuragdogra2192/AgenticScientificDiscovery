@@ -5,12 +5,20 @@ import json
 import logging
 import math
 import statistics
+import re
+import os
 from dataclasses import dataclass, asdict, field
 from typing import Optional, List, Dict, Any
 from enum import Enum
 from datetime import datetime
 
 import yaml
+
+try:
+    from anthropic import Anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 

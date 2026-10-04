@@ -4,12 +4,19 @@ import asyncio
 import json
 import logging
 import re
+import os
 from dataclasses import dataclass, field, asdict
 from typing import Optional, Callable
 from enum import Enum
 from datetime import datetime
 
 import yaml
+
+try:
+    from anthropic import Anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +152,22 @@ class HypothesisAgent:
         self.concept_map: dict[str, list[str]] = {}
         self.hypothesis_counter = 0
 
+        # Initialize Claude client if API key available
+        self.use_claude = False
+        self.claude_client = None
+        if ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                self.claude_client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+                self.use_claude = True
+                logger.info("Claude Haiku API initialized for hypothesis generation")
+            except Exception as e:
+                logger.warning(f"Could not initialize Claude API: {e}. Falling back to rule-based generation.")
+                self.use_claude = False
+        elif ANTHROPIC_AVAILABLE:
+            logger.warning("ANTHROPIC_API_KEY not set. Falling back to rule-based hypothesis generation.")
+        else:
+            logger.warning("anthropic library not installed. Using rule-based hypothesis generation.")
+
     async def generate_hypotheses(
         self,
         papers: list,
@@ -152,10 +175,27 @@ class HypothesisAgent:
         query: str,
         domain: Optional[str] = None,
     ) -> list[Hypothesis]:
-        """Generate hypotheses from literature findings."""
+        """Generate hypotheses from literature findings using Claude or rule-based fallback."""
         logger.info(f"Generating hypotheses for query: {query}")
 
         hypotheses = []
+
+        # Try Claude first if available
+        if self.use_claude and self.claude_client:
+            try:
+                logger.info("Using Claude Haiku for hypothesis generation")
+                claude_hypotheses = await self._generate_with_claude(
+                    papers, research_gaps, query, domain
+                )
+                hypotheses.extend(claude_hypotheses)
+                logger.info(f"Claude generated {len(claude_hypotheses)} hypotheses")
+                return hypotheses
+            except Exception as e:
+                logger.warning(f"Claude generation failed: {e}. Falling back to rule-based.")
+                self.use_claude = False
+
+        # Fallback: Rule-based generation
+        logger.info("Using rule-based hypothesis generation")
 
         # Build concept map from papers
         self._build_concept_map(papers)
@@ -188,7 +228,174 @@ class HypothesisAgent:
         # Apply filters and sort
         hypotheses = self._filter_and_rank(hypotheses)
 
-        logger.info(f"Generated {len(hypotheses)} hypotheses")
+        logger.info(f"Generated {len(hypotheses)} hypotheses (rule-based fallback)")
+        return hypotheses
+
+    async def _generate_with_claude(
+        self,
+        papers: list,
+        research_gaps: list,
+        query: str,
+        domain: Optional[str] = None,
+    ) -> list[Hypothesis]:
+        """Generate hypotheses using Claude Haiku API."""
+        # Prepare context
+        papers_summary = json.dumps([
+            {
+                "title": p.get("title", ""),
+                "year": p.get("publication_year", 0),
+                "abstract": p.get("abstract", "")[:300],
+            }
+            for p in papers[:10]
+        ], indent=2)
+
+        gaps_summary = json.dumps([
+            {
+                "description": g.get("description", ""),
+                "priority": g.get("priority_level", "medium"),
+            }
+            for g in research_gaps[:5]
+        ], indent=2)
+
+        # Create prompt for Claude
+        prompt = f"""You are a scientific research expert. Generate 5-7 testable hypotheses based on the provided literature and research gaps.
+
+RESEARCH QUESTION: {query}
+DOMAIN: {domain or "General"}
+
+SAMPLE PAPERS:
+{papers_summary}
+
+IDENTIFIED RESEARCH GAPS:
+{gaps_summary}
+
+Generate hypotheses that:
+1. Are testable and falsifiable
+2. Address identified gaps
+3. Build on existing literature
+4. Have clear predictions and variables
+
+Return a JSON array with this structure for each hypothesis:
+{{
+  "title": "Clear, concise hypothesis title",
+  "statement": "Formal hypothesis statement",
+  "background": "Scientific background and rationale",
+  "hypothesis_type": "causal|associative|comparative|mechanistic|predictive",
+  "complexity": "simple|moderate|complex",
+  "predictions": [
+    {{
+      "statement": "Specific, measurable prediction",
+      "success_criterion": "How to verify this prediction",
+      "expected_effect_size": "Estimated effect size"
+    }}
+  ],
+  "independent_variables": [
+    {{"name": "variable_name", "description": "What it measures"}}
+  ],
+  "dependent_variables": [
+    {{"name": "outcome", "description": "What we measure as result"}}
+  ],
+  "control_variables": [
+    {{"name": "control", "description": "What needs to be controlled"}}
+  ],
+  "assumptions": ["Assumption 1", "Assumption 2"],
+  "novelty_score": 0.85,
+  "feasibility_score": 0.75,
+  "impact_score": 0.80,
+  "testability_score": 0.90,
+  "resources_needed": ["Resource 1", "Resource 2"],
+  "timeline_estimate": "3-6 months",
+  "risk_factors": ["Risk 1"]
+}}
+
+Return ONLY valid JSON array, no other text."""
+
+        # Call Claude
+        response = self.claude_client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=4096,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        # Parse response
+        response_text = response.content[0].text
+
+        # Extract JSON from response
+        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+        if not json_match:
+            raise ValueError("Claude did not return valid JSON array")
+
+        hypotheses_data = json.loads(json_match.group())
+
+        # Convert to Hypothesis objects
+        hypotheses = []
+        for i, hyp_data in enumerate(hypotheses_data):
+            try:
+                hyp = Hypothesis(
+                    id=f"claude_{i}_{self.hypothesis_counter}",
+                    title=hyp_data.get("title", ""),
+                    statement=hyp_data.get("statement", ""),
+                    background=hyp_data.get("background", ""),
+                    predictions=[
+                        Prediction(
+                            statement=p.get("statement", ""),
+                            measurable=True,
+                            success_criterion=p.get("success_criterion", ""),
+                            expected_effect_size=p.get("expected_effect_size"),
+                        )
+                        for p in hyp_data.get("predictions", [])
+                    ],
+                    hypothesis_type=HypothesisType(hyp_data.get("hypothesis_type", "mechanistic")),
+                    complexity=ComplexityLevel(hyp_data.get("complexity", "moderate")),
+                    independent_variables=[
+                        Variable(
+                            name=v.get("name", ""),
+                            description=v.get("description", ""),
+                            measurement_method="Specified by researcher",
+                        )
+                        for v in hyp_data.get("independent_variables", [])
+                    ],
+                    dependent_variables=[
+                        Variable(
+                            name=v.get("name", ""),
+                            description=v.get("description", ""),
+                            measurement_method="Specified by researcher",
+                        )
+                        for v in hyp_data.get("dependent_variables", [])
+                    ],
+                    control_variables=[
+                        Variable(
+                            name=v.get("name", ""),
+                            description=v.get("description", ""),
+                            measurement_method="Controlled/randomized",
+                        )
+                        for v in hyp_data.get("control_variables", [])
+                    ],
+                    assumptions=hyp_data.get("assumptions", []),
+                    alternative_hypotheses=[],
+                    novelty_score=float(hyp_data.get("novelty_score", 0.7)),
+                    feasibility_score=float(hyp_data.get("feasibility_score", 0.7)),
+                    impact_score=float(hyp_data.get("impact_score", 0.7)),
+                    testability_score=float(hyp_data.get("testability_score", 0.8)),
+                    overall_score=float(hyp_data.get("novelty_score", 0.7)) * 0.25 +
+                                 float(hyp_data.get("feasibility_score", 0.7)) * 0.30 +
+                                 float(hyp_data.get("impact_score", 0.7)) * 0.25 +
+                                 float(hyp_data.get("testability_score", 0.8)) * 0.20,
+                    related_papers=[p.get("title", "") for p in papers[:3]],
+                    resources_needed=hyp_data.get("resources_needed", []),
+                    timeline_estimate=hyp_data.get("timeline_estimate", "3-6 months"),
+                    risk_factors=hyp_data.get("risk_factors", []),
+                    generated_at=datetime.now().isoformat(),
+                    source_strategy="claude_haiku",
+                )
+                hypotheses.append(hyp)
+                self.hypothesis_counter += 1
+            except Exception as e:
+                logger.warning(f"Could not parse hypothesis {i}: {e}")
+                continue
+
         return hypotheses
 
     async def _generate_gap_bridging(
