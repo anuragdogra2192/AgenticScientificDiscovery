@@ -1,149 +1,193 @@
-name: Literature Agent
-description: Search and analyze scientific literature to identify evidence and research gaps
-version: "1.0.0"
+name: Literature Agent (Drug Discovery & Biology)
+description: Search and analyze biomedical literature for drug discovery, molecular targets, and evidence gaps
+version: "2.0.0"
+domain: Drug Discovery and Biology
 
 # Core agent configuration
 agent:
   type: specialist
-  role: literature_researcher
+  role: biomedical_researcher
+  domain: drug_discovery
   capabilities:
-    - search_scientific_databases
-    - extract_evidence
+    - search_biomedical_databases
+    - search_chemical_compounds
+    - extract_molecular_evidence
+    - extract_assay_data
+    - identify_drug_targets
     - identify_gaps
     - synthesize_findings
 
-# Database connectors
+# Database connectors - Biomedical Focus
 databases:
-  openalex:
-    name: OpenAlex
-    description: Comprehensive academic library with millions of papers
-    api_url: https://api.openalex.org
+  europe_pmc:
+    name: Europe PMC
+    description: Comprehensive biomedical and life sciences literature repository
+    api_url: https://www.ebi.ac.uk/europepmc/webservices/rest
     endpoints:
-      works: /works
-      authors: /authors
-      institutions: /institutions
-      concepts: /concepts
+      search: /search
+      articles: /articles
+      citations: /citations
     rate_limit: 10  # requests per second
     capabilities:
       - full_text_search
-      - filtering_by_year
-      - filtering_by_topic
+      - biomedical_filtering
+      - pmcid_extraction
+      - mesh_term_filtering
       - citation_network
+      - full_text_retrieval
+    biomedical_fields:
+      - disease_name
+      - drug_name
+      - protein_target
+      - pathway
+      - organism
+    output_fields:
+      - PMCID
+      - PMID
+      - DOI
+      - title
+      - abstract
+      - keywords
+      - mesh_terms
 
-  arxiv:
-    name: arXiv
-    description: Preprint repository for physics, CS, math, and more
-    api_url: https://arxiv.org/api
+  pubchem:
+    name: PubChem
+    description: Public repository of chemical compound information
+    api_url: https://pubchem.ncbi.nlm.nih.gov/rest/pug
     endpoints:
-      search: /arxiv/api/query
-    rate_limit: 3  # requests per second
+      compound: /compound
+      assay: /assay
+      substance: /substance
+    rate_limit: 5  # requests per second
+    capabilities:
+      - compound_search
+      - molecular_properties
+      - assay_data_retrieval
+      - bioactivity_search
+      - structure_search
+      - target_search
+    chemical_fields:
+      - compound_name
+      - molecular_weight
+      - molecular_formula
+      - iupac_name
+      - inchi
+      - smiles
+      - canonical_smiles
+    bioactivity_fields:
+      - target_name
+      - bioactivity_type
+      - activity_value
+      - assay_description
+      - organism
+      - cell_line
+
+  openalex:
+    name: OpenAlex
+    description: Comprehensive academic library (fallback)
+    api_url: https://api.openalex.org
+    endpoints:
+      works: /works
+    rate_limit: 10
     capabilities:
       - full_text_search
-      - filtering_by_category
-      - filtering_by_date
-      - metadata_extraction
+      - filtering_by_year
 
-  semantic_scholar:
-    name: Semantic Scholar
-    description: AI-powered research paper discovery
-    api_url: https://api.semanticscholar.org/CorpusID
-    rate_limit: 1  # requests per second (varies with key)
-    capabilities:
-      - semantic_search
-      - citation_context
-      - author_profiles
-
-# Agent tools and capabilities
-tools:
-  search:
-    - search_papers
-    - search_by_author
-    - search_by_keyword
-    - advanced_filters
-
-  extract:
-    - parse_abstract
-    - extract_methodology
-    - extract_findings
-    - extract_citations
-    - extract_authors
-    - extract_affiliations
-
-  analyze:
-    - identify_research_gaps
-    - detect_trends
-    - map_topic_space
-    - analyze_citation_network
-    - evaluate_paper_quality
-
-  synthesize:
-    - summarize_findings
-    - generate_literature_review
-    - identify_consensus
-    - highlight_controversies
-
-# Search configuration
+# Drug discovery specific search configuration
 search:
   default_limit: 50
-  max_results: 1000
-  default_sort: relevance
-  filters:
-    min_citations: 0
-    publication_year_range: [1990, 2026]
-    open_access_preference: true
+  max_limit: 500
+  default_year_range: [2015, 2026]
 
-# Output formats
+  drug_discovery_keywords:
+    - drug target identification
+    - compound screening
+    - bioactivity assay
+    - drug candidate
+    - lead optimization
+    - ADME properties
+    - molecular docking
+    - structure-activity relationship
+    - hit-to-lead
+    - preclinical development
+
+  mesh_terms:
+    - Drug Discovery
+    - Molecular Docking Simulation
+    - Structure-Activity Relationship
+    - High-Throughput Screening Assays
+    - Drug Screening
+    - Pharmaceutical Chemistry
+    - Protein Binding
+    - Enzyme Inhibition
+    - Molecular Targets
+
+# Gap detection for drug discovery
+gap_detection:
+  enabled: true
+  keywords:
+    - untested compounds
+    - unexplored targets
+    - limited bioactivity data
+    - novel mechanism
+    - drug resistance
+    - off-target effects
+    - ADME optimization
+    - clinical translation
+    - combination therapy
+
+# Biomedical entity extraction
+entity_extraction:
+  enabled: true
+  entity_types:
+    - disease
+    - drug_name
+    - protein_target
+    - gene
+    - organism
+    - cell_type
+    - assay_type
+    - pathway
+    - chemical_compound
+
+# Output format
 output:
   formats:
     - json
     - markdown
-    - bibtex
-    - structured_summary
+    - rdf
 
-  fields:
-    paper:
-      - title
-      - authors
-      - publication_year
-      - journal
-      - doi
-      - abstract
-      - citations_count
-      - openalex_id
-      - arxiv_id
-      - pdf_url
+  biomedical_fields:
+    - pmcid
+    - pmid
+    - doi
+    - title
+    - authors
+    - publication_date
+    - abstract
+    - keywords
+    - mesh_terms
+    - disease_targets
+    - compound_cids
+    - molecular_targets
+    - assay_types
+    - organism_studied
 
-    findings:
-      - key_evidence
-      - methodologies
-      - datasets_used
-      - limitations
-      - future_directions
+# Validation rules
+validation:
+  require_abstract: true
+  min_year: 2010
+  max_papers_per_query: 500
+  deduplication: by_doi_and_title
 
-    gap_analysis:
-      - identified_gaps
-      - unanswered_questions
-      - potential_research_areas
-      - underexplored_connections
+# Caching
+cache:
+  enabled: true
+  ttl_hours: 24
+  cache_dir: ./cache/literature_agent/
 
-# Agent behavior
-behavior:
-  timeout: 300  # seconds
-  max_retries: 3
-  batch_size: 25
-  cache_results: true
-  cache_ttl: 3600  # seconds
-
-  search_strategy: |
-    1. Start with semantic search to understand topic landscape
-    2. Use citation network analysis to find seminal works
-    3. Identify emerging research frontiers (recent papers)
-    4. Look for contradictions and debates
-    5. Map author and institution collaborations
-
-# Monitoring and logging
-monitoring:
-  log_level: INFO
-  track_api_calls: true
-  track_performance: true
-  error_handling: comprehensive
+# Logging
+logging:
+  level: INFO
+  log_file: ./logs/literature_agent.log
+  log_api_calls: true

@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Paper:
-    """Represents a scientific paper."""
+class BiomedicalRecord:
+    """Biomedical paper with drug discovery attributes."""
     title: str
     authors: list[str]
     publication_year: int
@@ -23,6 +23,19 @@ class Paper:
     doi: Optional[str]
     abstract: str
     citations_count: int
+
+    # Biomedical-specific fields
+    pmcid: Optional[str] = None
+    pmid: Optional[str] = None
+    mesh_terms: Optional[list[str]] = None
+    disease_targets: Optional[list[str]] = None
+    compound_cids: Optional[list[str]] = None  # PubChem Compound IDs
+    molecular_targets: Optional[list[str]] = None
+    assay_types: Optional[list[str]] = None
+    organism_studied: Optional[str] = None
+    full_text_url: Optional[str] = None
+
+    # Legacy compatibility
     openalex_id: Optional[str] = None
     arxiv_id: Optional[str] = None
     pdf_url: Optional[str] = None
@@ -36,10 +49,23 @@ class Paper:
             "doi": self.doi,
             "abstract": self.abstract,
             "citations_count": self.citations_count,
+            "pmcid": self.pmcid,
+            "pmid": self.pmid,
+            "mesh_terms": self.mesh_terms,
+            "disease_targets": self.disease_targets,
+            "compound_cids": self.compound_cids,
+            "molecular_targets": self.molecular_targets,
+            "assay_types": self.assay_types,
+            "organism_studied": self.organism_studied,
+            "full_text_url": self.full_text_url,
             "openalex_id": self.openalex_id,
             "arxiv_id": self.arxiv_id,
             "pdf_url": self.pdf_url,
         }
+
+
+# Keep legacy Paper name for backward compatibility
+Paper = BiomedicalRecord
 
 
 @dataclass
@@ -71,14 +97,22 @@ class LiteratureAgent:
         year_range: tuple[int, int] | None = None,
         limit: int | None = None,
     ) -> list[Paper]:
-        """Search for papers across scientific databases."""
+        """Search for biomedical papers across drug discovery databases."""
         if databases is None:
-            databases = ["openalex", "arxiv"]
+            databases = ["europe_pmc", "openalex"]  # Default to biomedical sources
 
         if limit is None:
             limit = self.config["search"]["default_limit"]
 
         papers = []
+
+        if "europe_pmc" in databases:
+            pmc_papers = await self._search_europe_pmc(query, year_range, limit)
+            papers.extend(pmc_papers)
+
+        if "pubchem" in databases:
+            pubchem_compounds = await self._search_pubchem(query, limit)
+            papers.extend(pubchem_compounds)
 
         if "openalex" in databases:
             openalex_papers = await self._search_openalex(query, year_range, limit)
@@ -88,14 +122,115 @@ class LiteratureAgent:
             arxiv_papers = await self._search_arxiv(query, year_range, limit)
             papers.extend(arxiv_papers)
 
-        # Deduplicate by DOI or title
+        # Deduplicate by DOI or PMCID or title
         unique_papers = {}
         for paper in papers:
-            key = paper.doi or paper.title
+            key = paper.doi or paper.pmcid or paper.title
             if key not in unique_papers:
                 unique_papers[key] = paper
 
         return list(unique_papers.values())[:limit]
+
+    async def _search_europe_pmc(
+        self,
+        query: str,
+        year_range: tuple[int, int] | None = None,
+        limit: int = 50,
+    ) -> list[Paper]:
+        """Search Europe PMC API for biomedical literature."""
+        try:
+            # Add drug discovery keywords to enhance search
+            drug_keywords = self.config["search"].get("drug_discovery_keywords", [])
+            enhanced_query = f"{query} ({' OR '.join(drug_keywords[:3])})"
+
+            params = {
+                "query": enhanced_query,
+                "pageSize": min(limit, 100),
+                "resultType": "core",
+                "format": "json",
+            }
+
+            if year_range:
+                params["pubYear"] = f"{year_range[0]}-{year_range[1]}"
+
+            response = await self.client.get(
+                f"{self.config['databases']['europe_pmc']['api_url']}/search",
+                params=params,
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            papers = []
+
+            for result in data.get("resultList", {}).get("result", []):
+                paper = self._parse_europe_pmc_result(result)
+                if paper:
+                    papers.append(paper)
+
+            logger.info(f"Found {len(papers)} papers on Europe PMC for query: {query}")
+            return papers
+
+        except httpx.HTTPError as e:
+            logger.error(f"Europe PMC search failed: {e}")
+            return []
+
+    async def _search_pubchem(
+        self,
+        query: str,
+        limit: int = 50,
+    ) -> list[Paper]:
+        """Search PubChem API for chemical compounds related to drug discovery."""
+        try:
+            # First search for compounds matching the query
+            compound_params = {
+                "q": query,
+                "type": "cid",
+            }
+
+            response = await self.client.get(
+                f"{self.config['databases']['pubchem']['api_url']}/compound/search/json",
+                params=compound_params,
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            papers = []
+            compound_ids = data.get("IdentifierList", {}).get("CID", [])[:min(limit, 10)]
+
+            # For each compound, get bioactivity data
+            for cid in compound_ids:
+                compound_papers = await self._fetch_pubchem_bioactivity(cid, query)
+                papers.extend(compound_papers)
+
+            logger.info(f"Found {len(papers)} compound-related records in PubChem for query: {query}")
+            return papers
+
+        except httpx.HTTPError as e:
+            logger.error(f"PubChem search failed: {e}")
+            return []
+
+    async def _fetch_pubchem_bioactivity(self, compound_id: str, original_query: str) -> list[Paper]:
+        """Fetch bioactivity data for a PubChem compound."""
+        try:
+            response = await self.client.get(
+                f"{self.config['databases']['pubchem']['api_url']}/compound/{compound_id}/json"
+            )
+            response.raise_for_status()
+
+            data = response.json()
+            compound_data = data.get("PC_CompoundAssay", {})
+
+            papers = []
+            if compound_data:
+                paper = self._parse_pubchem_result(compound_data, compound_id, original_query)
+                if paper:
+                    papers.append(paper)
+
+            return papers
+
+        except httpx.HTTPError as e:
+            logger.warning(f"Failed to fetch PubChem bioactivity for CID {compound_id}: {e}")
+            return []
 
     async def _search_openalex(
         self,
@@ -175,6 +310,87 @@ class LiteratureAgent:
         except (httpx.HTTPError, ET.ParseError) as e:
             logger.error(f"arXiv search failed: {e}")
             return []
+
+    @staticmethod
+    def _parse_europe_pmc_result(result: dict) -> Optional[Paper]:
+        """Parse a result from Europe PMC API."""
+        try:
+            authors = []
+            author_list = result.get("authorList", {}).get("author", [])
+            if isinstance(author_list, list):
+                for author in author_list[:10]:
+                    if isinstance(author, dict):
+                        authors.append(author.get("fullName", ""))
+            elif isinstance(author_list, dict):
+                authors.append(author_list.get("fullName", ""))
+
+            pub_year_str = result.get("pubYear", "0")
+            try:
+                pub_year = int(pub_year_str)
+            except ValueError:
+                pub_year = 0
+
+            mesh_terms = []
+            mesh_list = result.get("meshHeadingList", {}).get("meshHeading", [])
+            if isinstance(mesh_list, list):
+                for mesh in mesh_list[:10]:
+                    if isinstance(mesh, dict):
+                        mesh_terms.append(mesh.get("descriptorName", ""))
+
+            disease_targets = [t for t in mesh_terms if any(
+                x in t.lower() for x in ["disease", "disorder", "condition"]
+            )]
+
+            full_text_url = None
+            if result.get("pmcid"):
+                full_text_url = f"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{result['pmcid']}"
+
+            return Paper(
+                title=result.get("title", ""),
+                authors=authors,
+                publication_year=pub_year,
+                journal=result.get("journalTitle", ""),
+                doi=result.get("doi"),
+                abstract=result.get("abstractText", ""),
+                citations_count=result.get("citedByCount", 0),
+                pmcid=result.get("pmcid"),
+                pmid=result.get("pmid"),
+                mesh_terms=mesh_terms,
+                disease_targets=disease_targets,
+                full_text_url=full_text_url,
+            )
+        except (KeyError, TypeError):
+            return None
+
+    @staticmethod
+    def _parse_pubchem_result(compound_data: dict, compound_id: str, original_query: str) -> Optional[Paper]:
+        """Parse bioactivity data from PubChem compound."""
+        try:
+            # Extract compound information
+            assay_data = compound_data.get("PC_CompoundAssay_Assay", [])
+            if not assay_data:
+                return None
+
+            assay_info = assay_data[0] if isinstance(assay_data, list) else assay_data
+
+            assay_description = assay_info.get("description", "Compound bioactivity data from PubChem")
+            target_name = assay_info.get("target", {}).get("name", "Unknown Target")
+
+            return Paper(
+                title=f"Bioactivity Study: {original_query} (CID: {compound_id})",
+                authors=["PubChem Database"],
+                publication_year=2024,
+                journal="PubChem",
+                doi=None,
+                abstract=assay_description,
+                citations_count=0,
+                compound_cids=[compound_id],
+                molecular_targets=[target_name],
+                assay_types=[assay_info.get("assayType", "Unknown")],
+                organism_studied=assay_info.get("organism", ""),
+            )
+        except (KeyError, TypeError, IndexError):
+            return None
 
     @staticmethod
     def _parse_openalex_result(result: dict) -> Optional[Paper]:
@@ -339,28 +555,36 @@ class LiteratureAgent:
 
 
 async def main():
-    """Example usage of the Literature Agent."""
+    """Example usage of the Literature Agent for drug discovery."""
     agent = LiteratureAgent()
 
     try:
-        # Search for papers
-        print("🔍 Searching for papers on machine learning interpretability...")
+        # Drug discovery search example
+        print("🔍 Searching for drug discovery literature on cancer immunotherapy...")
         papers = await agent.search_papers(
-            "machine learning interpretability explainability",
-            databases=["openalex"],
+            "cancer immunotherapy PD-1 checkpoint inhibitor",
+            databases=["europe_pmc", "openalex"],
             year_range=(2020, 2026),
-            limit=10,
+            limit=15,
         )
 
-        print(f"Found {len(papers)} papers")
-        for i, paper in enumerate(papers[:3], 1):
+        print(f"Found {len(papers)} biomedical records")
+        for i, paper in enumerate(papers[:5], 1):
             print(f"\n{i}. {paper.title}")
             print(f"   Authors: {', '.join(paper.authors[:2])}")
             print(f"   Year: {paper.publication_year}")
             print(f"   Citations: {paper.citations_count}")
+            if paper.pmcid:
+                print(f"   PMCID: {paper.pmcid}")
+            if paper.mesh_terms:
+                print(f"   MeSH Terms: {', '.join(paper.mesh_terms[:2])}")
+            if paper.disease_targets:
+                print(f"   Disease Targets: {', '.join(paper.disease_targets[:2])}")
+            if paper.compound_cids:
+                print(f"   PubChem IDs: {', '.join(paper.compound_cids)}")
 
-        # Identify gaps
-        print("\n\n🔎 Analyzing research gaps...")
+        # Identify gaps in drug discovery
+        print("\n\n🔎 Analyzing drug discovery research gaps...")
         gaps = await agent.identify_gaps(papers)
 
         print(f"Identified {len(gaps)} research gaps")
@@ -369,14 +593,18 @@ async def main():
             print(f"  Priority: {gap.priority_level} (confidence: {gap.confidence:.2f})")
 
         # Generate report
-        print("\n\n📊 Generating report...")
+        print("\n\n📊 Generating biomedical literature report...")
         report = await agent.generate_report(
-            "machine learning interpretability explainability",
+            "cancer immunotherapy drug discovery",
             papers,
             gaps,
         )
 
-        print(json.dumps(report, indent=2))
+        print(f"\nReport Summary:")
+        print(f"Total papers: {report['statistics']['total_papers']}")
+        print(f"Year range: {report['statistics']['year_range']}")
+        print(f"Avg citations: {report['statistics']['avg_citations']:.1f}")
+        print(f"Identified gaps: {report['statistics']['identified_gaps']}")
 
     finally:
         await agent.close()
