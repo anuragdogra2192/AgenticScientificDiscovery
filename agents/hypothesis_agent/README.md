@@ -1,22 +1,30 @@
 # Hypothesis Agent (Insight Agent) 💡
 
-The Hypothesis Agent transforms literature findings and research gaps into clear, testable scientific hypotheses. It uses multiple generation strategies to propose novel ideas and ranks them by novelty, feasibility, impact, and testability.
+**Status**: ✅ **LIVE with Claude Haiku 4.5**
+
+The Hypothesis Agent transforms literature findings into clear, testable scientific hypotheses using Claude Haiku for intelligent generation and scoring. Specialized for Mycobacterium tuberculosis (Mtb) drug discovery with targets like DprE1, InhA, and MmpL3.
 
 ## Features
 
-### 🧬 Hypothesis Generation Strategies
-- **Gap Bridging**: Directly propose mechanisms to address identified research gaps
-- **Trend Detection**: Identify patterns in literature and propose their implications
-- **Contradiction Resolution**: Suggest hypotheses to reconcile conflicting findings
-- **Cross-Domain Synthesis**: Transfer successful approaches from other fields
-- **Novel Combination**: Propose new relationships between existing concepts
+### 🤖 Claude Haiku 4.5 Integration
+- **Primary Generation**: Claude Haiku generates 5-7 novel hypotheses per request
+- **Intelligent Scoring**: Claude evaluates by novelty, feasibility, impact, testability
+- **Graceful Fallback**: If API unavailable, uses rule-based hypothesis generation
+- **Mtb-Focused Prompts**: Automatically targets Mycobacterium tuberculosis mechanisms
+- **Structured JSON Output**: Returns validated hypotheses with scoring
+
+### 🧬 Generation Strategies
+- **Target-Specific**: DprE1, InhA, MmpL3 (cell wall synthesis inhibition)
+- **Mechanism-Driven**: How compounds achieve Mtb growth inhibition
+- **Resistance-Focused**: Addresses MDR/XDR-TB resistance mechanisms
+- **Selectivity Analysis**: Predicts mammalian cytotoxicity thresholds
 
 ### ⚖️ Evaluation & Ranking
-- **Novelty Score**: How new/original is this hypothesis?
-- **Feasibility Score**: Can we actually test this with available resources?
-- **Impact Score**: If confirmed, how important would this finding be?
-- **Testability Score**: Can we design clear, unambiguous tests?
-- **Overall Score**: Weighted combination of all factors
+- **Novelty Score** (0.25 weight): Is this a new approach to Mtb inhibition?
+- **Feasibility Score** (0.30 weight): Can we test in BSL-3 with <$100k budget?
+- **Impact Score** (0.25 weight): How important for TB drug discovery?
+- **Testability Score** (0.20 weight): Can we design clear assays?
+- **Overall Score**: Weighted combination for ranking
 
 ### 📋 Hypothesis Structure
 Each hypothesis includes:
@@ -35,11 +43,26 @@ Each hypothesis includes:
 - Research design sketching for top hypotheses
 - Export to JSON for downstream tools
 
-## Installation
+## Setup
 
+### 1. Install Dependencies
 ```bash
-# Dependencies already installed from root requirements.txt
 pip install -r ../../requirements.txt
+pip install anthropic  # For Claude Haiku integration
+```
+
+### 2. Configure API Key
+```bash
+# Create .env.local file in project root
+cp .env.local.example .env.local
+
+# Add your Anthropic API key (from console.anthropic.com)
+ANTHROPIC_API_KEY=sk-ant-v1-YOUR_KEY_HERE
+```
+
+### 3. Verify Setup
+```bash
+python setup_claude.py  # Tests Claude connection
 ```
 
 ## Usage
@@ -438,16 +461,50 @@ class CustomHypothesisAgent(HypothesisAgent):
 - Increase number of generation strategies
 - Manually select from different `source_strategy` types
 
+## Claude Haiku 4.5 Implementation Details
+
+### How Claude Generates Hypotheses
+```python
+# Agent loads Claude Haiku and prompts:
+prompt = """You are an expert Mtb drug discovery scientist.
+Analyze the literature to generate 5-7 novel hypotheses for 
+DprE1, InhA, or MmpL3 inhibition.
+
+For each hypothesis, score by:
+- Novelty (0-1): How new is this approach?
+- Feasibility (0-1): Can we test in BSL-3 <$100k?
+- Impact (0-1): How important for TB therapy?
+- Testability (0-1): Can we design clear assays?
+
+Return ONLY valid JSON with hypotheses array."""
+
+# Returns structured JSON with 5-7 hypotheses + scores
+```
+
+### Fallback Behavior (No API Key)
+When Claude API unavailable or offline:
+- ✓ Falls back to rule-based hypothesis generation
+- ✓ Uses Mtb domain templates for consistency
+- ✓ Returns same JSON structure (no API calls)
+- ✓ Pipeline continues normally
+
+### Configuration (hypothesis_agent.yaml)
+```yaml
+executor:
+  model: claude-haiku-4-5-20251001
+  temperature: 0.3  # Creative (not deterministic)
+  max_tokens: 2048
+```
+
 ## Future Enhancements
 
-- [ ] LLM-based hypothesis expansion
-- [ ] Semantic similarity clustering
-- [ ] Automated experiment design generation
-- [ ] Hypothesis refinement through feedback
-- [ ] Integration with prior work databases
-- [ ] Multi-hypothesis comparison visualization
+- [ ] Multi-round hypothesis refinement with Claude
+- [ ] Automated mechanism of action prediction
+- [ ] Resistance pattern analysis
+- [ ] Selectivity Index optimization
+- [ ] Integration with PubChem for compound synthesis
 - [ ] Bayesian hypothesis prioritization
-- [ ] Automated assumption validation
+- [ ] Hypothesis comparison visualizations
 
 ## References
 

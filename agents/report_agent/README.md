@@ -1,6 +1,8 @@
 # Report Agent 📝
 
-The Report Agent is the final agent in the Agentic Scientific Discovery Lab. It synthesizes findings from the Analysis Agent into publication-ready research papers with proper structure, citations, visualizations, and knowledge representations.
+**Status**: ✅ **LIVE with Claude Haiku 4.5**
+
+The Report Agent synthesizes Mycobacterium tuberculosis findings into publication-ready research papers. Uses Claude Haiku to generate APA-formatted papers with proper structure (Abstract, Methods, Results, Discussion, Conclusion). Includes citations, figures/tables, and knowledge graph exports for BSL-3 Mtb assay results.
 
 ## Features
 

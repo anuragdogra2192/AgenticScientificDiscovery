@@ -1,6 +1,8 @@
 # Literature Agent 📚
 
-The Literature Agent is a specialist agent designed to search, analyze, and synthesize scientific literature across multiple academic databases. It identifies key evidence, detects research gaps, and helps researchers understand the current state of knowledge in any field.
+**Status**: ✅ **LIVE with Claude Haiku 4.5**
+
+The Literature Agent searches biomedical literature (Europe PMC, PubChem) for Mycobacterium tuberculosis drug discovery. Uses Claude Haiku to identify research gaps and prioritize findings. Focuses on DprE1, InhA, MmpL3 targets and resistance mechanisms in TB drug development.
 
 ## Features
 

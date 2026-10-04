@@ -1,6 +1,8 @@
 # Experiment Agent 🧪
 
-The Experiment Agent transforms scored hypotheses into rigorous experimental protocols. It designs appropriate experiments, estimates resource requirements, identifies datasets, and predicts success probability.
+**Status**: ✅ **LIVE with Claude Haiku 4.5**
+
+The Experiment Agent transforms hypotheses into rigorous BSL-3 experimental protocols for Mycobacterium tuberculosis drug discovery. Uses Claude Haiku to design protocols, estimate budgets, and assess feasibility—all focused on Mtb targets (DprE1, InhA, MmpL3) with in vitro and cellular assays.
 
 ## Features
 

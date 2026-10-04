@@ -3,138 +3,164 @@
 ## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Research Assistant Portal                    │
-│              (Future: Web UI, Slack Bot, CLI Tools)              │
-└────────────────────────┬────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    🔬 Agentic Scientific Discovery Lab               │
+│                   (CLI + Web UI + Knowledge Graph)                   │
+└────────────────────────┬─────────────────────────────────────────────┘
                          │
         ┌────────────────┴────────────────┐
         │                                 │
 ┌───────▼──────┐  ┌────────────────┐  ┌──▼──────────┐
 │  Literature  │  │   Hypothesis   │  │ Experiment  │
 │    Agent     │  │     Agent      │  │    Agent    │
-│   (Ready)    │  │   (Planning)   │  │  (Planning) │
+│   ✅ LIVE    │  │   ✅ LIVE      │  │  ✅ LIVE    │
 └───────┬──────┘  └────────────────┘  └──┬──────────┘
-        │                                 │
+        │      (Claude Haiku 4.5)        │
         ├─────────────────────────────────┤
         │                                 │
 ┌───────▼──────────────────────────┐  ┌──▼──────────────┐
 │      Analysis Agent              │  │  Report Agent   │
-│      (Planning)                  │  │  (Planning)     │
+│      ✅ LIVE                      │  │  ✅ LIVE        │
 └────────────────────────────────┬─┘  └──┬──────────────┘
                                  │       │
                     ┌────────────┴──────┴────────┐
                     │                           │
             ┌───────▼────────────┐    ┌────────▼───────┐
-            │ Knowledge Graph    │    │  Evidence Base │
-            │ (Planning)         │    │  (Planning)    │
+            │ Knowledge Graph    │    │ Master         │
+            │ Agent (✅ LIVE)     │    │ Orchestrator   │
             └────────────────────┘    └────────────────┘
                     │                           │
                     └───────────────┬───────────┘
                                     │
-        ┌───────────────────────────▼───────────────────────┐
-        │         External Data & API Layer                 │
-        │  ┌──────────┐  ┌────────┐  ┌───────────────────┐  │
-        │  │ OpenAlex │  │ arXiv  │  │ Semantic Scholar  │  │
-        │  └──────────┘  └────────┘  └───────────────────┘  │
-        └─────────────────────────────────────────────────────┘
+        ┌──────────────┬────────────┴────────────┬──────────┐
+        │              │                         │          │
+   ┌────▼──────┐  ┌────▼──────┐  ┌────────┐  ┌──▼──────┐  │
+   │ Europe    │  │ PubChem   │  │ Gradio │  │ .env    │  │
+   │ PMC       │  │ API       │  │ Web UI │  │ .local  │  │
+   └───────────┘  └───────────┘  └────────┘  └─────────┘  │
+   (Biomedical Literature)  (UI + Config)
 ```
+
+**Status**: All agents fully operational with Claude Haiku 4.5 integration and graceful fallback to rule-based logic.
 
 ## Agent Hierarchy
 
 ### Level 1: Data Collection
-**Literature Agent** ✅
-- Searches academic databases
-- Extracts paper metadata
-- Analyzes citation networks
-- Identifies research gaps
+**Literature Agent** ✅ **LIVE with Claude Haiku 4.5**
+- Searches Europe PMC & PubChem for biomedical literature
+- Extracts paper metadata and relevance scoring
+- Identifies research gaps in Mtb drug discovery
+- Uses Claude for intelligent gap analysis
 
 ```
-Input:  Research query
+Input:  Research query (e.g., "DprE1 inhibitors for TB")
         ↓
-       [Search] → OpenAlex, arXiv
+    [Claude] → Analyze query relevance & context
         ↓
-     [Extract] → Parse papers
+  [Search] → Europe PMC, PubChem APIs
         ↓
-     [Analyze] → Find patterns
+ [Extract] → Parse papers, score relevance
         ↓
-Output: Papers + Gaps
+  [Claude] → Intelligent gap identification
+        ↓
+Output: Papers + Research gaps + Analysis
 ```
 
 ### Level 2: Knowledge Synthesis
-**Hypothesis Agent** (Planned)
-- Analyzes literature patterns
-- Generates novel hypotheses
-- Assesses feasibility
-- Prioritizes by impact
+**Hypothesis Agent** ✅ **LIVE with Claude Haiku 4.5**
+- Analyzes literature patterns using Claude
+- Generates novel anti-tubercular hypotheses (5-7 per request)
+- Scores by novelty (0.25), feasibility (0.30), impact (0.25), testability (0.20)
+- Returns ranked hypotheses with confidence
 
 ```
-Input:  Literature + Gaps
+Input:  Literature findings + research gaps
         ↓
-    [Analyze] → Extract concepts
+   [Claude] → Analyze patterns, identify opportunities
         ↓
-   [Generate] → Create hypotheses
+ [Generate] → Create novel Mtb-focused hypotheses
         ↓
-    [Evaluate] → Score feasibility
+   [Score] → Novelty, feasibility, impact, testability
         ↓
-Output: Ranked hypotheses
+Output: Ranked hypotheses with molecular targets
 ```
 
 ### Level 3: Experimental Design
-**Experiment Agent** (Planned)
-- Designs experimental protocols
-- Suggests datasets
-- Simulates experiments
-- Predicts outcomes
+**Experiment Agent** ✅ **LIVE with Claude Haiku 4.5**
+- Uses Claude to design rigorous BSL-3 experimental protocols
+- Generates sample sizes, budgets, and timelines
+- Includes Mtb-specific controls (DMSO, Rifampicin, THP-1 macrophage)
+- Validates against budget constraints (<$100k)
 
 ```
-Input:  Hypothesis
+Input:  Selected hypothesis
         ↓
-    [Design] → Protocol generation
+  [Claude] → Design BSL-3 protocol for Mtb target
         ↓
-   [Suggest] → Dataset discovery
+ [Generate] → Sample size, measures, timeline
         ↓
-  [Simulate] → Run simulations
+  [Estimate] → Budget with equipment & facility costs
         ↓
-Output: Experiment plan
+   [Validate] → Risk assessment, mitigation strategies
+        ↓
+Output: Experimental design + budget + approval summary
 ```
 
 ### Level 4: Result Analysis
-**Analysis Agent** (Planned)
-- Statistical testing
-- Result interpretation
-- Contextualization
-- Finding extraction
+**Analysis Agent** ✅ **LIVE with Claude Haiku 4.5**
+- Statistical analysis of simulated/real Mtb assay results
+- Interprets MIC reduction, intracellular IC50, Selectivity Index (SI)
+- Validates hypothesis confirmation with confidence levels
+- Generates implications for in vivo testing
 
 ```
-Input:  Experimental results
+Input:  Experimental design + simulated results data
         ↓
-    [Analyze] → Statistical tests
+ [Analyze] → Statistical tests (t-test, ANOVA, etc.)
         ↓
- [Interpret] → Extract meaning
+[Claude] → Interpret findings in Mtb context
         ↓
-  [Compare] → Literature context
+ [Compare] → Validate against literature benchmarks
         ↓
-Output: Analyzed findings
+Output: Analysis report + hypothesis confirmation + implications
 ```
 
 ### Level 5: Knowledge Dissemination
-**Report Agent** (Planned)
-- Paper generation
-- Visualization creation
-- Citation management
-- Future work identification
+**Report Agent** ✅ **LIVE with Claude Haiku 4.5**
+- Generates publication-ready APA-formatted papers
+- Structures findings into 6 sections (Abstract, Intro, Methods, Results, Discussion, Conclusion)
+- Includes citations, figures, and tables
+- Outputs JSON, Markdown, and HTML formats
 
 ```
-Input:  Findings
+Input:  All prior phases (hypothesis, design, analysis)
         ↓
-[Generate] → Paper structure
+[Claude] → Compose research paper sections
         ↓
-  [Create] → Visualizations
+ [Format] → APA citations, figures, tables
         ↓
-  [Format] → Final document
+ [Export] → JSON, Markdown, HTML
         ↓
-Output: Research paper
+Output: Publication-ready research paper
+```
+
+### Level 6: Knowledge Integration
+**Knowledge Graph Agent** ✅ **LIVE with Claude Haiku 4.5**
+- Extracts semantic entities (targets, compounds, diseases, findings)
+- Builds relationships between entities
+- Exports as RDF/Turtle/JSON-LD for integration with external knowledge bases
+- Enables future refinement and cross-linking
+
+```
+Input:  All discovery phases (hypothesis, experiment, analysis, report)
+        ↓
+[Claude] → Extract entities and relationships
+        ↓
+[Build] → Knowledge graph structure
+        ↓
+[Export] → RDF, Turtle, JSON-LD formats
+        ↓
+Output: Semantic knowledge graph for integration
 ```
 
 ## Agent Components
@@ -142,266 +168,450 @@ Output: Research paper
 ### Each Agent Contains:
 
 ```
-agent/
-├── agent.py              # Core implementation
-│   ├── class Definition  # Main agent class
-│   ├── Tool methods      # Specific capabilities
-│   └── Utility methods   # Helpers
-├── config.yaml           # Configuration
-│   ├── name & role       # Agent identity
-│   ├── capabilities      # What it can do
-│   ├── tools             # Available tools
-│   └── parameters        # Tuning knobs
-├── README.md             # Documentation
-└── examples.py           # Usage examples
+agents/agent_name/
+├── agent.py                      # Core implementation
+│   ├── Anthropic SDK import      # try: from anthropic import Anthropic
+│   ├── ANTHROPIC_AVAILABLE flag  # Graceful fallback support
+│   ├── Claude client init        # os.environ.get("ANTHROPIC_API_KEY")
+│   ├── _generate_with_claude()   # Claude-powered method
+│   ├── _generate_rule_based()    # Fallback implementation
+│   └── async methods             # All I/O is async
+│
+├── agent_name.yaml               # Configuration
+│   ├── model: claude-haiku-4-5-20251001
+│   ├── temperature: 0.2 or 0.3   # Deterministic vs creative
+│   ├── max_tokens: per agent     # Output size limit
+│   ├── prompt: domain-specific   # Mtb-focused instructions
+│   └── structured JSON require   # Enforce valid JSON
+│
+├── README.md                     # Documentation
+├── examples.py                   # Usage examples
+└── __init__.py                   # Package export
 ```
 
-### Agent Interface (Unified)
+### Claude Integration Pattern (All Agents)
 
 ```python
-class Agent:
-    # Initialization
-    __init__(config_path: str)
+class MyAgent:
+    def __init__(self, config_path):
+        # Load YAML config
+        self.config = yaml.safe_load(open(config_path))
+        
+        # Try to initialize Claude Haiku
+        self.use_claude = False
+        self.claude_client = None
+        if ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY"):
+            try:
+                self.claude_client = Anthropic(api_key=...)
+                self.use_claude = True
+                logger.info("Claude Haiku API initialized")
+            except Exception as e:
+                logger.warning(f"Could not init Claude: {e}")
     
-    # Core methods (all agents implement)
-    async run(input_data: Any) -> Any
-    async close() -> None
+    async def generate_result(self, inputs):
+        # Try Claude first
+        if self.use_claude and self.claude_client:
+            try:
+                return await self._generate_with_claude(inputs)
+            except Exception as e:
+                logger.warning(f"Claude failed: {e}. Using rule-based.")
+        
+        # Fallback to rule-based logic (always works)
+        return self._generate_rule_based(inputs)
     
-    # Specialized methods per agent
-    # (e.g., search_papers, generate_hypotheses, etc.)
+    async def _generate_with_claude(self, inputs):
+        # Prompt with JSON requirement
+        prompt = f"""You are a specialist in X.
+        Return ONLY valid JSON with this structure:
+        {{"field1": "value", ...}}
+        
+        INPUT: {json.dumps(inputs)}"""
+        
+        response = self.claude_client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=self.config.get("max_tokens", 2048),
+            temperature=self.config.get("temperature", 0.2),
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        # Clean and parse JSON
+        json_str = self._extract_json_content(response.content[0].text)
+        return MyDataClass(**json.loads(json_str))
+    
+    def _generate_rule_based(self, inputs):
+        # Fallback logic (deterministic, no API needed)
+        return MyDataClass(...)
 ```
 
 ## Data Flow
 
-### Example: Literature Search Pipeline
+### Example: Complete Discovery Pipeline (with Claude Integration)
 
 ```
-User Query
+RESEARCH QUESTION
     ↓
-┌───────────────────────────┐
-│  LiteratureAgent.search() │
-└────────┬──────────────────┘
+┌─────────────────────────────────────────┐
+│ Phase 1: Literature Discovery           │
+│ (LiteratureAgent with Claude)           │
+└────────┬────────────────────────────────┘
          │
-         ├─→ [OpenAlex API Call]
-         │   ↓
-         │   └─→ HTTP Request
-         │       ↓
-         │       Parse JSON
-         │       ↓
-         │       Create Paper objects
-         │       ↓
-         │       Cache results
+         ├─→ [Claude] Analyze query relevance
          │
-         └─→ [arXiv API Call]
-             ↓
-             └─→ HTTP Request
+         ├─→ [Europe PMC API] Search biomedical literature
+         │   └─→ Parse results, score relevance
+         │
+         ├─→ [PubChem API] Search chemical compounds
+         │   └─→ Extract compound properties
+         │
+         └─→ [Claude] Identify research gaps
+             └─→ Return: Papers + Gaps + Analysis
                  ↓
-                 Parse XML
+    ┌──────────────────────────────────────┐
+    │ Papers: List[Paper]                  │
+    │ Gaps: List[ResearchGap]              │
+    │ Gap scores with confidence           │
+    └──────────────────────────────────────┘
                  ↓
-                 Create Paper objects
+┌─────────────────────────────────────────┐
+│ Phase 2: Hypothesis Generation          │
+│ (HypothesisAgent with Claude)           │
+└────────┬────────────────────────────────┘
+         │
+         └─→ [Claude] Generate 5-7 hypotheses
+             ├─→ Analyze literature patterns
+             ├─→ Suggest Mtb targets (DprE1, InhA, MmpL3)
+             ├─→ Score: novelty, feasibility, impact, testability
+             └─→ Return: Ranked hypotheses
                  ↓
-                 Merge & deduplicate
+    ┌──────────────────────────────────────┐
+    │ Hypotheses: List[Hypothesis]         │
+    │ Scores: {novelty, feasibility, ...}  │
+    │ Selected: Hypothesis (top-ranked)    │
+    └──────────────────────────────────────┘
                  ↓
-         ┌──────────────────────┐
-         │  List[Paper] returned │
-         └──────────────────────┘
+┌─────────────────────────────────────────┐
+│ Phase 3: Experiment Design              │
+│ (ExperimentAgent with Claude)           │
+└────────┬────────────────────────────────┘
+         │
+         └─→ [Claude] Design BSL-3 protocol
+             ├─→ Sample size calculation
+             ├─→ Mtb controls: DMSO, Rifampicin, THP-1
+             ├─→ Budget: equipment + facility costs
+             ├─→ Timeline & milestones
+             └─→ Return: ExperimentalDesign
                  ↓
-         ┌──────────────────────┐
-         │ Gap Analysis Phase   │
-         └────────┬─────────────┘
-                  │
-                  ├─→ Extract patterns
-                  ├─→ Find indicators
-                  └─→ Score gaps
-                      ↓
-              ┌───────────────┐
-              │ List[Gap]     │
-              └───────────────┘
+    ┌──────────────────────────────────────┐
+    │ Design: ExperimentalDesign           │
+    │ Protocol: BSL-3 procedures           │
+    │ Budget: <$100k (validated)           │
+    │ Timeline: 12 weeks                   │
+    └──────────────────────────────────────┘
+                 ↓
+        [Human Approval Gate] ← Optional
+                 ↓
+┌─────────────────────────────────────────┐
+│ Phase 4: Result Analysis                │
+│ (AnalysisAgent with Claude)             │
+└────────┬────────────────────────────────┘
+         │
+         └─→ [Claude] Analyze experimental results
+             ├─→ Statistical tests (t-test, ANOVA)
+             ├─→ MIC reduction, IC50 interpretation
+             ├─→ Selectivity Index (SI) validation
+             ├─→ Hypothesis confirmation
+             └─→ Return: AnalysisReport
+                 ↓
+    ┌──────────────────────────────────────┐
+    │ Report: AnalysisReport               │
+    │ Finding: Hypothesis confirmed/reject │
+    │ Strength: High/Medium/Low            │
+    │ Implications: For in vivo testing    │
+    └──────────────────────────────────────┘
+                 ↓
+┌─────────────────────────────────────────┐
+│ Phase 5: Report Generation              │
+│ (ReportAgent with Claude)               │
+└────────┬────────────────────────────────┘
+         │
+         └─→ [Claude] Generate research paper
+             ├─→ Abstract (250 words)
+             ├─→ Introduction (background, gaps)
+             ├─→ Methods (BSL-3 protocols)
+             ├─→ Results (findings + statistics)
+             ├─→ Discussion (implications)
+             ├─→ Conclusion (next steps)
+             └─→ Return: ResearchPaper
+                 ↓
+    ┌──────────────────────────────────────┐
+    │ Paper: ResearchPaper                 │
+    │ Format: Markdown/JSON/HTML           │
+    │ Status: Publication-ready            │
+    └──────────────────────────────────────┘
+                 ↓
+┌─────────────────────────────────────────┐
+│ Phase 6: Knowledge Graph Integration    │
+│ (KnowledgeGraphAgent with Claude)       │
+└────────┬────────────────────────────────┘
+         │
+         └─→ [Claude] Extract semantic entities
+             ├─→ Targets: DprE1, InhA, etc.
+             ├─→ Compounds: Lead inhibitors
+             ├─→ Findings: MIC values, SI scores
+             ├─→ Relationships: targets, inhibits, etc.
+             └─→ Export: RDF/Turtle/JSON-LD
+                 ↓
+    ┌──────────────────────────────────────┐
+    │ KnowledgeGraph: Semantic web data    │
+    │ Entities: 10+ types                  │
+    │ Relationships: Linked data format    │
+    │ Export formats: JSON-LD, RDF, etc.   │
+    └──────────────────────────────────────┘
+                 ↓
+            ✅ COMPLETE
+            
+            Results saved to ./results/
+            - workflow_state_TIMESTAMP.json
+            - research_paper_TIMESTAMP.md
+            - knowledge_graph_TIMESTAMP.json
 ```
 
-## Database Adapter Pattern
+## Biomedical Data Sources
 
-Each database has a standardized adapter:
+Each agent uses specialized data sources:
 
-```python
-class DatabaseAdapter:
-    async def search(self, query, params) -> List[Paper]:
-        # 1. Format query for API
-        # 2. Make HTTP request with rate limiting
-        # 3. Parse response
-        # 4. Convert to Paper objects
-        # 5. Return standardized format
+### Literature Agent
+- **Europe PMC API**: Biomedical literature with Mtb focus
+- **PubChem API**: Chemical compound information
+- Uses Claude for relevance scoring and gap analysis
 
-class OpenAlexAdapter(DatabaseAdapter):
-    async def search(self, query, params):
-        # OpenAlex-specific implementation
-        
-class ArxivAdapter(DatabaseAdapter):
-    async def search(self, query, params):
-        # arXiv-specific implementation
-```
+### Experiment Agent
+- **Mtb Assay Protocols**: MIC testing, THP-1 macrophage assays
+- **Budget/Resource Templates**: Validated cost estimates
+- Claude designs specific BSL-3 protocols for given targets
+
+### All Agents
+- **Claude Haiku 4.5 API**: Primary intelligence layer
+- **Rule-Based Fallback**: Deterministic logic when API unavailable
 
 ## Configuration Hierarchy
 
 ```yaml
-# agents/literature_agent/config.yaml
-agent:
-  name: Literature Agent
-  capabilities: [...]
-  
-databases:
-  openalex:
-    api_url: https://api.openalex.org
-    rate_limit: 10
-    
-search:
-  default_limit: 50
-  max_results: 1000
-  
-output:
-  formats: [json, markdown, bibtex]
+# agents/hypothesis_agent/hypothesis_agent.yaml
+version: "2.0"
+name: "hypothesis-agent"
+
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.3  # Creative (vs 0.2 for deterministic)
+  max_tokens: 2048
+
+prompt: |
+  You are an expert Mtb drug discovery scientist.
+  Generate 5-7 novel hypotheses targeting DprE1, InhA, or MmpL3.
+  Score each by: novelty (0.25), feasibility (0.30), impact (0.25), testability (0.20)
+  Return ONLY valid JSON with hypotheses array.
+
+# .env.local
+ANTHROPIC_API_KEY=sk-ant-v1-...
+CLAUDE_MODEL=claude-haiku-4-5-20251001
+CLAUDE_TIMEOUT=30
+CLAUDE_DEBUG=false
+CLAUDE_MAX_TOKENS=2048
 ```
 
 When agent loads:
-1. Parse YAML
-2. Initialize database clients
-3. Configure rate limiters
-4. Set output formatters
-5. Ready for use
+1. Try to load ANTHROPIC_API_KEY from .env.local
+2. Initialize Claude Haiku client (if key available)
+3. Parse agent YAML config
+4. Set temperature, token limits, model
+5. Ready for use (with Claude or fallback)
 
 ## Async/Await Architecture
 
 All agents use Python async for:
-- Non-blocking API calls
-- Concurrent database queries
+- Non-blocking Claude API calls
+- Concurrent biomedical API queries
 - Efficient resource usage
-- Responsive UI
+- Responsive web UI (Gradio)
 
 ```python
-async def search_papers(query):
-    # Run searches in parallel
-    results = await asyncio.gather(
-        search_openalex(query),
-        search_arxiv(query),
-        search_semantic_scholar(query)
+async def run_discovery_loop(research_question):
+    # Run all phases sequentially with proper state management
+    state = DiscoveryState()
+    
+    # Phase 1: Literature (parallel searches)
+    state.papers = await asyncio.gather(
+        literature_agent.search_europe_pmc(research_question),
+        literature_agent.search_pubchem(research_question)
     )
-    # All three complete concurrently
-    return combine_results(results)
+    
+    # Phase 2: Hypothesis (Claude)
+    state.hypotheses = await hypothesis_agent.generate_hypotheses(
+        state.papers
+    )
+    
+    # Phase 3-6: Sequential phases
+    state.experiment = await experiment_agent.design_experiment(...)
+    state.analysis = await analysis_agent.analyze_results(...)
+    state.paper = await report_agent.generate_paper(...)
+    state.kg = await kg_agent.build_knowledge_graph(...)
+    
+    return state
 ```
 
 ## Error Handling & Resilience
 
-Each agent implements:
+Each agent implements graceful fallback:
 
 ```python
-try:
-    result = await api_call()
-except RateLimitError:
-    await asyncio.sleep(backoff_time)
-    result = await api_call()  # retry
-except ConnectionError:
-    logger.error("API unreachable")
-    return cached_result() or []
-finally:
-    await client.close()
+async def generate_result(self, inputs):
+    # Try Claude first
+    if self.use_claude and self.claude_client:
+        try:
+            result = await self._generate_with_claude(inputs)
+            logger.info("Claude generation successful")
+            return result
+        except anthropic.APIError as e:
+            logger.warning(f"Claude API error: {e}. Using rule-based fallback.")
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON parse error: {e}. Retrying or falling back.")
+    
+    # Fallback: Rule-based logic (always works)
+    logger.info("Using rule-based generation (offline mode)")
+    return self._generate_rule_based(inputs)
 ```
+
+**Key principles:**
+- No crashes on API failure (fallback ensures continuity)
+- All intermediate state saved to `./results/`
+- Errors logged but don't block workflow
+- User never sees "API key missing" — just gets rule-based results
 
 ## Extensibility Points
 
-### 1. Add New Database
+### 1. Add New Claude-Powered Agent
 ```python
-# In config.yaml
+# In agents/new_agent/agent.py
+from anthropic import Anthropic
+
+class NewAgent:
+    def __init__(self):
+        # Load config
+        self.config = yaml.safe_load(open("new_agent.yaml"))
+        
+        # Initialize Claude
+        if ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY"):
+            self.claude_client = Anthropic(...)
+            self.use_claude = True
+    
+    async def generate_something(self, inputs):
+        if self.use_claude and self.claude_client:
+            try:
+                return await self._generate_with_claude(inputs)
+            except Exception as e:
+                logger.warning(f"Claude failed: {e}")
+        return self._generate_rule_based(inputs)
+```
+
+### 2. Add New Data Source to Literature Agent
+```python
+# In agents/literature_agent/agent.py
+async def _search_new_api(self, query, limit):
+    # Implement API call
+    results = await httpx.AsyncClient().get(
+        f"https://api.example.com/search?q={query}",
+        timeout=10
+    )
+    papers = [Paper(**item) for item in results.json()]
+    return papers
+
+# In literature_agent.yaml
 databases:
-  new_db:
-    api_url: https://api.example.com
+  new_api:
+    url: https://api.example.com
     rate_limit: 5
-
-# In agent.py
-async def _search_new_db(self, query, limit):
-    # Implementation
 ```
 
-### 2. Add New Tool
+### 3. Add New Mtb Target to Hypothesis Agent
+- Update prompts in `hypothesis_agent.yaml` with new target
+- Agent will automatically generate hypotheses for it
+- Claude focuses generation on specified targets
+
+### 4. Add New Agent to Orchestrator
 ```python
-# In agent.py
-async def new_capability(self, input_data):
-    # New analysis or processing
-    return output_data
-
-# Update config
-tools:
-  analyze:
-    - new_capability
-```
-
-### 3. Add New Agent
-```
-agents/
-├── literature_agent/     # Existing
-└── new_agent/           # New
-    ├── agent.py
-    ├── config.yaml
-    ├── README.md
-    └── examples.py
+# In run_discovery_loop.py
+async def _phase_custom(self):
+    agent = CustomAgent()
+    result = await agent.run(self.state)
+    self.state.custom_result = result
+    return result
 ```
 
 ## Performance Characteristics
 
-### Literature Agent
-
-| Operation | Time | Notes |
-|-----------|------|-------|
-| Search (10 results) | 2-5s | Parallel APIs |
-| Search (100 results) | 5-15s | Rate-limited |
-| Gap analysis | 1-2s | In-memory |
-| Report generation | <1s | JSON assembly |
+### Full Workflow (6 Phases)
+| Phase | Time | Notes |
+|-------|------|-------|
+| Phase 1: Literature | 5-10s | Parallel API calls |
+| Phase 2: Hypothesis | 2-3s | Claude generation |
+| Phase 3: Experiment | 2-3s | Claude design |
+| Phase 4: Analysis | 1-2s | Statistical tests |
+| Phase 5: Report | 3-5s | Claude paper gen |
+| Phase 6: Knowledge Graph | 1-2s | Entity extraction |
+| **Total** | **15-25s** | End-to-end with Claude |
 
 ### Scalability
-
-- **Concurrent searches**: Limited by rate limits
-- **Cache**: In-memory, configurable TTL
-- **Pagination**: Support for 1000+ results
-- **Memory**: ~5-10MB per 1000 papers
+- **Claude token budget**: ~15,000 tokens per full run ($0.10 cost)
+- **Biomedical APIs**: 5-10 parallel calls per agent
+- **Memory**: ~50MB for full workflow state
+- **Results persist**: `./results/` directory
 
 ## Testing Strategy
 
-```python
-# Unit tests
-test_paper_parsing()
-test_gap_identification()
-test_report_generation()
+```bash
+# Unit test: Agent in isolation
+python agents/hypothesis_agent/examples.py
 
-# Integration tests
-test_openalex_integration()
-test_arxiv_integration()
+# Integration test: Full pipeline
+python run_discovery_loop.py
 
-# End-to-end tests
-test_full_search_pipeline()
+# Offline test (no Claude API key)
+unset ANTHROPIC_API_KEY
+python run_discovery_loop.py  # Uses rule-based fallback
+
+# Web UI test
+python app.py  # Launch at http://localhost:7860
 ```
 
 ## Monitoring & Logging
 
 Each agent logs:
-- API call counts and timing
-- Error rates and types
-- Cache hit rates
-- Processing times
+- **Claude API calls**: Model, tokens, latency
+- **Fallback activation**: When Claude unavailable
+- **Biomedical API calls**: Source, results count, latency
+- **Processing times**: Per phase
+- **Error tracking**: With recovery attempts
 
 ```python
-logger.info(f"Found {len(papers)} papers for '{query}'")
-logger.debug(f"OpenAlex: {openalex_count}, arXiv: {arxiv_count}")
-logger.error(f"API Error: {error_details}")
+logger.info("Claude Haiku API initialized for Mtb hypothesis generation")
+logger.debug(f"Generated {len(hypotheses)} hypotheses with scores")
+logger.warning(f"Claude unavailable, using rule-based hypothesis generation")
+logger.error(f"Europe PMC API error: {error_details}")
 ```
 
 ## Future Architecture Enhancements
 
-1. **Agent Communication**: Inter-agent messaging
-2. **Workflow Orchestration**: DAG-based research pipelines
-3. **Distributed Execution**: Multi-machine agent deployment
-4. **Learning**: Agent improvement over time
-5. **Persistence**: Database storage for long-term analysis
-6. **API Gateway**: Unified interface for all agents
+1. **Real Experiment Runner**: Execute BSL-3 assays on lab hardware
+2. **Feedback Loop Enhancement**: Multi-round hypothesis refinement
+3. **Multi-Hypothesis Comparison**: Compare 3-5 top hypotheses in parallel
+4. **Advanced Approval Workflow**: Slack/email integration for approvals
+5. **Performance Analytics Dashboard**: Track phase durations, costs, success rates
+6. **Persistent Database**: Long-term knowledge accumulation
+7. **Collaborative Review**: Multi-user approval and comments
+8. **Cost Optimization**: Swap Claude Haiku for Opus for complex phases as needed
 
 ---
 
-This architecture supports rapid expansion from 1 specialist agent to a full multi-agent research assistant.
+This architecture supports the complete research pipeline from question to publication with intelligent AI agents, graceful offline fallback, and extensibility for new capabilities.

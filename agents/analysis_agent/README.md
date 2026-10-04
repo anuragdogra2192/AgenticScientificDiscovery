@@ -1,6 +1,8 @@
 # Analysis Agent 📊
 
-The Analysis Agent evaluates experimental results, performs statistical significance testing, interprets findings against hypotheses, and contextualizes results for the research narrative. It transforms raw experimental data into validated scientific findings.
+**Status**: ✅ **LIVE with Claude Haiku 4.5**
+
+The Analysis Agent evaluates Mycobacterium tuberculosis experimental results and extracts meaningful findings. Uses Claude Haiku for statistical interpretation, validates hypothesis confirmation, and assesses readiness for in vivo testing. Analyzes MIC values, intracellular IC50, THP-1 cytotoxicity, and Selectivity Index (SI > 10 threshold) with confidence assessment.
 
 ## Features
 
