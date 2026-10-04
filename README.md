@@ -296,3 +296,19 @@ Last Updated: October 2026
 5. **[Contribute](README.md#contributing)** your improvements
 
 Happy discovering! 🚀
+
+---
+
+## 👥 Team
+
+**NextExperiment**
+
+### Contacts
+- **Anurag Dogra** — AI/ML Architecture, Claude Integration, Orchestration
+  - Email: anuragdogra2192@gmail.com
+  - Role: Lead Developer
+  
+- **Monika Rangole** — Scientific Domain Expertise, Mtb Drug Discovery Focus
+  - Role: Domain Expert
+
+---
