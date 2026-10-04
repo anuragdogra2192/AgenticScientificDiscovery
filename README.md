@@ -134,6 +134,45 @@ async def main():
 asyncio.run(main())
 ```
 
+### Run the Complete Discovery Loop
+
+Run the full 6-phase Mtb drug discovery pipeline:
+
+```bash
+# CLI mode with auto-approval of experiment design
+python run_discovery_loop.py
+
+# Or with manual approval checkpoint
+python run_discovery_loop.py --no-auto-approve
+```
+
+**What it does:**
+1. 📚 Searches Europe PMC & PubChem for literature on your research topic
+2. 💡 Generates 5-7 testable hypotheses targeting Mtb (DprE1, InhA, MmpL3)
+3. 🧪 Designs BSL-3 experimental protocols with budget estimation
+4. 📊 Analyzes results and validates hypothesis confirmation
+5. 📝 Generates publication-ready research paper (APA format)
+6. 🧬 Builds semantic knowledge graph for future use
+
+**Output saved to `./results/`:**
+- `workflow_state_TIMESTAMP.json` — Complete workflow state
+- `research_paper_TIMESTAMP.md` — Generated paper
+- `knowledge_graph_TIMESTAMP.json` — Semantic entities and relationships
+
+### Run the Web UI (Gradio)
+
+Interactive web interface at http://localhost:7860:
+
+```bash
+python app.py
+```
+
+**Features:**
+- Chat interface for research queries
+- Live progress updates (6 phases)
+- Visual workflow status
+- Download results directly
+
 ## 📖 Documentation
 
 - **[Setup Guide](SETUP.md)** - Installation and configuration
@@ -330,72 +369,17 @@ report = await agent.generate_report(
 - [ ] Performance analytics dashboard
 - [ ] Persistent knowledge accumulation database
 
-## 🤝 Contributing
-
-We welcome contributions! For a hackathon project, you can:
-
-1. **Add new agents** following the template
-2. **Extend existing agents** with new capabilities
-3. **Add new data sources** (Google Scholar, Scopus, etc.)
-4. **Improve analysis** (ML-based gap detection, clustering, etc.)
-5. **Create integrations** (Slack, email, documents, etc.)
-
-## 🐛 Troubleshooting
-
-### API Connection Issues
-```bash
-# Test OpenAlex
-curl -s https://api.openalex.org/works?search=test | head
-
-# Test arXiv
-curl -s "https://arxiv.org/api/query?search_query=test&start=0&max_results=1"
-```
-
-### Rate Limiting
-- OpenAlex: 10 requests/second with politeness (waits between requests)
-- arXiv: 3 requests/second
-- Semantic Scholar: 1 request/second (higher with API key)
-
-### No Results
-- Try simpler, shorter search terms
-- Expand year range
-- Try different database
-- Check internet connection
-
 ## 📚 Resources
-
-### Documentation
-- [OpenAlex API Docs](https://docs.openalex.org)
-- [arXiv API Documentation](https://arxiv.org/help/api)
-- [Semantic Scholar API](https://www.semanticscholar.org/product/api)
-
-### Related Work
-- [SciPy Conference Talks](https://www.scipy.org/)
-- [arXiv Research](https://arxiv.org)
-- [Nature Machine Intelligence](https://www.nature.com/natmachintell/)
 
 ## 📄 License
 
 MIT License - Use freely for your hackathon and beyond!
 
 ## 🎉 Hackathon Details
-
-Built for: **Agentic Scientific Discovery Lab Hackathon**
-Version: 1.0.0
-Last Updated: October 2026
-
+Built for: **Hack-Nation 7th Global AI Hackathon**
 ---
 
-## 🌟 Next Steps
-
-1. **[Setup the project](SETUP.md)** in 5 minutes
-2. **[Run examples](agents/literature_agent/examples.py)** to see it in action
-3. **[Build your first search](agents/literature_agent/README.md)** on your topic
-4. **[Extend the agents](SETUP.md#building-more-agents)** with new capabilities
-5. **[Contribute](README.md#contributing)** your improvements
-
 Happy discovering! 🚀
-
 ---
 
 ## 👥 Team
@@ -403,11 +387,12 @@ Happy discovering! 🚀
 **NextExperiment**
 
 ### Contacts
-- **Anurag Dogra** — AI/ML Architecture, Claude Integration, Orchestration
+- **Anurag Dogra** — Software Engineering, HPC, AI/ML Architecture
   - Email: anuragdogra2192@gmail.com
   - Role: Lead Developer
   
-- **Monika Rangole** — Scientific Domain Expertise, Mtb Drug Discovery Focus
+- **Monika Rangole** — Scientific Domain Expertise, BioPhysics, Mtb Drug Discovery Focus
+  - Email: monikarangole13@gmail.com
   - Role: Domain Expert
 
 ---
