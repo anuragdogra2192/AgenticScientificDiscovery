@@ -1,0 +1,353 @@
+name: Experiment Agent
+description: Design rigorous experiments to test scientific hypotheses
+version: "1.0.0"
+
+# Core agent configuration
+agent:
+  type: specialist
+  role: experiment_designer
+  capabilities:
+    - experiment_design
+    - dataset_identification
+    - resource_estimation
+    - sample_size_calculation
+    - outcome_prediction
+    - protocol_validation
+    - risk_mitigation
+
+# Experiment types
+experiment_types:
+
+  randomized_controlled_trial:
+    name: Randomized Controlled Trial (RCT)
+    description: Gold standard with random assignment to treatment/control
+    rigor_level: high
+    min_sample_size: 100
+    typical_duration_weeks: 8
+    suitable_for:
+      - causal_hypotheses
+      - intervention_testing
+    requirements:
+      - random_assignment
+      - control_group
+      - outcome_measurement
+      - blinding_preferred
+
+  observational_study:
+    name: Observational Study
+    description: Measure variables without intervention
+    rigor_level: medium
+    min_sample_size: 200
+    typical_duration_weeks: 12
+    suitable_for:
+      - associative_hypotheses
+      - descriptive_research
+      - where_intervention_impossible
+    requirements:
+      - representative_sample
+      - multiple_measurements
+      - confound_adjustment
+
+  quasi_experimental:
+    name: Quasi-Experimental Design
+    description: Between RCT and observational; no random assignment
+    rigor_level: medium
+    min_sample_size: 150
+    typical_duration_weeks: 10
+    suitable_for:
+      - field_interventions
+      - real_world_constraints
+      - comparative_hypotheses
+    requirements:
+      - matched_groups
+      - baseline_measurement
+      - post_intervention_measurement
+
+  simulation:
+    name: Computational Simulation
+    description: Test hypothesis using computational model
+    rigor_level: medium
+    min_sample_size: 1000  # simulated samples
+    typical_duration_weeks: 4
+    suitable_for:
+      - mechanistic_hypotheses
+      - predictive_hypotheses
+      - resource_constrained
+    requirements:
+      - formal_model
+      - parameter_specification
+      - validation_data
+
+  laboratory_experiment:
+    name: Laboratory Experiment
+    description: Controlled environment with precise measurements
+    rigor_level: high
+    min_sample_size: 50
+    typical_duration_weeks: 6
+    suitable_for:
+      - mechanism_testing
+      - causal_inference
+      - precise_measurement
+    requirements:
+      - controlled_environment
+      - precise_instruments
+      - repeated_measurement
+
+  a_b_test:
+    name: A/B Test / Online Experiment
+    description: Rapid testing with continuous data collection
+    rigor_level: medium
+    min_sample_size: 1000
+    typical_duration_weeks: 2
+    suitable_for:
+      - technology_applications
+      - rapid_iteration
+      - digital_interventions
+    requirements:
+      - online_platform
+      - random_assignment
+      - continuous_monitoring
+
+  meta_analysis:
+    name: Meta-Analysis / Systematic Review
+    description: Synthesize results across multiple studies
+    rigor_level: high
+    min_sample_size: null  # N/A - depends on studies
+    typical_duration_weeks: 16
+    suitable_for:
+      - hypothesis_synthesis
+      - evidence_summary
+      - contradiction_resolution
+    requirements:
+      - study_selection_criteria
+      - quality_assessment
+      - statistical_synthesis
+
+# Dataset sources and requirements
+datasets:
+  open_source_databases:
+    - name: Kaggle
+      url: https://www.kaggle.com/datasets
+      description: Community datasets across domains
+      access: Free registration
+
+    - name: GitHub
+      url: https://github.com
+      description: Code and data repositories
+      access: Free
+
+    - name: Zenodo
+      url: https://zenodo.org
+      description: Open research data
+      access: Free
+
+    - name: OSF (Open Science Framework)
+      url: https://osf.io
+      description: Preprints and research data
+      access: Free
+
+    - name: UCI Machine Learning Repository
+      url: https://archive.ics.uci.edu/ml
+      description: Classic ML datasets
+      access: Free
+
+    - name: Google Dataset Search
+      url: https://datasetsearch.research.google.com
+      description: Aggregated datasets
+      access: Free
+
+  domain_specific:
+    biology:
+      - NCBI Gene Expression Omnibus
+      - BioStudies
+      - Uniprot
+
+    neuroscience:
+      - Allen Brain Atlas
+      - Human Connectome Project
+      - NIMH Data Archive
+
+    climate:
+      - NOAA Climate Data
+      - ERA5 Reanalysis
+      - CMIP6 Models
+
+    social_science:
+      - ICPSR
+      - UN Data
+      - World Bank
+
+    machine_learning:
+      - ImageNet
+      - MNIST
+      - CIFAR-10
+      - Text corpora
+
+# Sample size and power analysis
+sample_size_estimation:
+  defaults:
+    alpha: 0.05              # Type I error rate
+    beta: 0.20               # Type II error rate (80% power)
+    effect_size: medium      # Small, medium, large
+
+  effect_sizes:
+    small: 0.2
+    medium: 0.5
+    large: 0.8
+
+  minimum_samples_by_complexity:
+    simple:
+      two_group: 64
+      three_group: 96
+      continuous: 80
+
+    moderate:
+      two_group: 128
+      three_group: 192
+      continuous: 160
+
+    complex:
+      two_group: 200
+      three_group: 300
+      continuous: 250
+
+# Resource estimation models
+resources:
+
+  personnel:
+    principal_investigator:
+      hours_per_week: 5
+      hourly_rate: 150
+      role: Study design and oversight
+
+    postdoc_researcher:
+      hours_per_week: 40
+      hourly_rate: 75
+      role: Primary execution
+
+    graduate_student:
+      hours_per_week: 30
+      hourly_rate: 25
+      role: Data collection and analysis
+
+    undergraduate:
+      hours_per_week: 20
+      hourly_rate: 15
+      role: Administrative support
+
+  equipment:
+    computing:
+      gpu_per_month: 500      # Rental cost
+      cpu_hours_cost: 1       # Per CPU-hour
+      storage_per_gb: 0.02    # Per GB/month
+
+    laboratory:
+      instrument_calibration: 500
+      consumables_per_run: 50
+      facility_access: 200    # Per month
+
+    software:
+      academic_licenses: 100  # Typical academic license
+      open_source: 0
+
+  external_services:
+    data_collection_platform: 500    # Per month
+    crowdsourcing: 0.50              # Per task
+    cloud_storage: 0.025             # Per GB/month
+    api_access: 100                  # Typical annual
+
+# Measurement and validation
+measurements:
+  validity_types:
+    - internal_validity      # Causal inference
+    - external_validity      # Generalizability
+    - construct_validity     # Measure what you intend
+    - statistical_conclusion_validity  # Statistical rigor
+
+  validation_approaches:
+    - pilot_study
+    - instrument_validation
+    - comparison_with_gold_standard
+    - inter_rater_reliability
+    - test_retest_reliability
+
+# Quality and rigor standards
+quality_assurance:
+
+  protocol_validation:
+    check_hypothesis_match: true
+    check_power_analysis: true
+    check_variable_operationalization: true
+    check_confound_control: true
+    check_data_quality_plan: true
+
+  rigor_checklist:
+    - preregistration_required: false  # Recommended
+    - blinding_recommended: true
+    - multiple_measures_recommended: true
+    - replication_considerations: true
+    - open_data_recommended: true
+
+# Outcome prediction
+prediction_models:
+
+  success_estimation:
+    - known_effect_size
+    - sample_size_adequacy
+    - measurement_reliability
+    - protocol_compliance
+    - confound_control_effectiveness
+
+  failure_modes:
+    - insufficient_power
+    - measurement_error
+    - sample_attrition
+    - confounding_variables
+    - implementation_fidelity
+    - external_validity_threats
+
+# Risk management
+risk_assessment:
+
+  categories:
+    - scientific_risk: Hypothesis might be false
+    - methodological_risk: Design issues
+    - practical_risk: Resource/timeline constraints
+    - ethical_risk: Participant/animal welfare
+    - technical_risk: Equipment/software failure
+
+  mitigation_strategies:
+    - alternative_designs
+    - contingency_plans
+    - early_stopping_rules
+    - fallback_datasets
+    - simplified_protocols
+
+# Output specification
+output:
+  formats:
+    - json
+    - markdown
+    - detailed_protocol
+    - resource_summary
+
+  sections:
+    - executive_summary
+    - experiment_design
+    - sample_and_setting
+    - measurements
+    - procedures
+    - data_analysis_plan
+    - resource_requirements
+    - timeline
+    - risk_assessment
+    - success_criteria
+    - alternative_designs
+
+# Monitoring and logging
+monitoring:
+  log_level: INFO
+  track_design_complexity: true
+  track_resource_estimates: true
+  track_success_predictions: true
+  save_protocol_version: true
