@@ -256,10 +256,13 @@ class LiteratureAgent:
         year_range: tuple[int, int] | None = None,
         limit: int = 50,
     ) -> list[Paper]:
-        """Search OpenAlex API."""
+        """Search OpenAlex API (optional fallback source)."""
         try:
+            # Simplify query for OpenAlex - remove special characters
+            simple_query = " ".join(query.split()[:5])  # First 5 words only
+
             params = {
-                "search": query,
+                "search": simple_query,
                 "per_page": min(limit, 200),
                 "sort": "cited_by_count:desc",
             }
@@ -271,6 +274,7 @@ class LiteratureAgent:
             response = await self.client.get(
                 f"{self.config['databases']['openalex']['api_url']}/works",
                 params=params,
+                timeout=10
             )
             response.raise_for_status()
 
@@ -282,12 +286,12 @@ class LiteratureAgent:
                 if paper:
                     papers.append(paper)
 
-            logger.info(f"Found {len(papers)} papers on OpenAlex for query: {query}")
+            logger.debug(f"Found {len(papers)} papers on OpenAlex")
             return papers
 
         except httpx.HTTPError as e:
-            logger.error(f"OpenAlex search failed: {e}")
-            return []
+            logger.debug(f"OpenAlex search (optional) skipped: {type(e).__name__}")
+            return []  # OpenAlex is optional - silently fail
 
     async def _search_arxiv(
         self,
@@ -295,17 +299,20 @@ class LiteratureAgent:
         year_range: tuple[int, int] | None = None,
         limit: int = 50,
     ) -> list[Paper]:
-        """Search arXiv API."""
+        """Search arXiv API (optional fallback source)."""
         try:
-            # arXiv uses a different query format
-            search_query = f"search_query=all:{query}"
+            # arXiv uses a different query format - simplify for compatibility
+            simple_query = " AND ".join(query.split()[:4])  # First 4 words
+            search_query = f"search_query=all:{simple_query}"
+
             if year_range:
                 search_query += f" AND submittedDate:[{year_range[0]}010100000000Z TO {year_range[1]}123123595999Z]"
 
-            search_query += f"&start=0&max_results={min(limit, 2000)}&sortBy=relevance&sortOrder=descending"
+            search_query += f"&start=0&max_results={min(limit, 100)}&sortBy=relevance&sortOrder=descending"
 
             response = await self.client.get(
                 f"{self.config['databases']['arxiv']['api_url']}?{search_query}",
+                timeout=10
             )
             response.raise_for_status()
 
@@ -322,12 +329,12 @@ class LiteratureAgent:
                 if paper:
                     papers.append(paper)
 
-            logger.info(f"Found {len(papers)} papers on arXiv for query: {query}")
+            logger.debug(f"Found {len(papers)} papers on arXiv")
             return papers
 
         except (httpx.HTTPError, ET.ParseError) as e:
-            logger.error(f"arXiv search failed: {e}")
-            return []
+            logger.debug(f"arXiv search (optional) skipped: {type(e).__name__}")
+            return []  # arXiv is optional - silently fail
 
     @staticmethod
     def _parse_europe_pmc_result(result: dict) -> Optional[Paper]:
