@@ -3,42 +3,41 @@
 ## System Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                    🔬 Agentic Scientific Discovery Lab               │
-│                   (CLI + Web UI + Knowledge Graph)                   │
-└────────────────────────┬─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    🔬 Agentic Scientific Discovery Lab                   │
+│              (6 Primary Agents + 2 Experiment Agents + CLI)              │
+└────────────────────────┬──────────────────────────────────────────────────┘
                          │
         ┌────────────────┴────────────────┐
         │                                 │
-┌───────▼──────┐  ┌────────────────┐  ┌──▼──────────┐
-│  Literature  │  │   Hypothesis   │  │ Experiment  │
-│    Agent     │  │     Agent      │  │    Agent    │
-│   ✅ LIVE    │  │   ✅ LIVE      │  │  ✅ LIVE    │
-└───────┬──────┘  └────────────────┘  └──┬──────────┘
+┌───────▼──────┐  ┌────────────────┐  ┌──▼──────────────┐
+│  Literature  │  │   Hypothesis   │  │ Experiment      │
+│    Agent     │  │     Agent      │  │ Agent           │
+│   ✅ LIVE    │  │   ✅ LIVE      │  │ ✅ LIVE         │
+└───────┬──────┘  └────────────────┘  └──┬──────────────┘
         │      (Claude Haiku 4.5)        │
         ├─────────────────────────────────┤
         │                                 │
-┌───────▼──────────────────────────┐  ┌──▼──────────────┐
-│      Analysis Agent              │  │  Report Agent   │
-│      ✅ LIVE                      │  │  ✅ LIVE        │
-└────────────────────────────────┬─┘  └──┬──────────────┘
+┌───────▼──────────────────────────┐  ┌──▼──────────────────┐
+│      Analysis Agent              │  │  Report Agent      │
+│      ✅ LIVE                      │  │  ✅ LIVE           │
+└────────────────────────────────┬─┘  └──┬──────────────────┘
                                  │       │
                     ┌────────────┴──────┴────────┐
                     │                           │
-            ┌───────▼────────────┐    ┌────────▼───────┐
-            │ Knowledge Graph    │    │ Master         │
-            │ Agent (✅ LIVE)     │    │ Orchestrator   │
-            └────────────────────┘    └────────────────┘
+            ┌───────▼────────────┐    ┌────────▼──────────┐
+            │ Knowledge Graph    │    │ Master            │
+            │ Agent (✅ LIVE)     │    │ Orchestrator      │
+            └────────────────────┘    └────────────────────┘
                     │                           │
-                    └───────────────┬───────────┘
-                                    │
-        ┌──────────────┬────────────┴────────────┬──────────┐
-        │              │                         │          │
-   ┌────▼──────┐  ┌────▼──────┐  ┌────────┐  ┌──▼──────┐  │
-   │ Europe    │  │ PubChem   │  │ Gradio │  │ .env    │  │
-   │ PMC       │  │ API       │  │ Web UI │  │ .local  │  │
-   └───────────┘  └───────────┘  └────────┘  └─────────┘  │
-   (Biomedical Literature)  (UI + Config)
+        ┌───────────┴─────────────────────────┬┘
+        │                                     │
+   ┌────▼──────┐  ┌────▼──────┐  ┌──────────▼────────┐
+   │ Exp        │  │ Exp        │  │ Europe PMC API   │
+   │ Planner    │  │ Runner     │  │ PubChem API      │
+   │ (✅ LIVE)   │  │ (✅ LIVE)   │  │ .env.local       │
+   └────────────┘  └────────────┘  └──────────────────┘
+   (Multi-Protocol Design)  (Execution)  (Config & Data)
 ```
 
 **Status**: All agents fully operational with Claude Haiku 4.5 integration and graceful fallback to rule-based logic.
@@ -161,6 +160,48 @@ Input:  All discovery phases (hypothesis, experiment, analysis, report)
 [Export] → RDF, Turtle, JSON-LD formats
         ↓
 Output: Semantic knowledge graph for integration
+```
+
+### Level 7: Experiment Planning
+**Experiment Planner Agent** ✅ **LIVE**
+- Designs multi-protocol comparative experiments
+- Optimizes protocol selection for complex hypotheses
+- Integrates with Experiment Agent designs
+- Coordinates 3-5 parallel experimental approaches
+- Validates comparative design rigor
+
+```
+Input:  Selected hypothesis + base experiment design
+        ↓
+ [Design] → Multi-protocol comparative approach
+        ↓
+[Optimize] → Protocol selection & resource allocation
+        ↓
+ [Validate] → Comparative rigor assessment
+        ↓
+Output: Comparative experimental protocol plan
+```
+
+### Level 8: Experiment Execution
+**Experiment Runner Agent** ✅ **LIVE**
+- Executes and monitors experimental protocols
+- Tracks protocol step completion
+- Real-time result monitoring and logging
+- Automated data collection (when hardware connected)
+- Error handling and protocol adjustments
+
+```
+Input:  Approved experimental protocol
+        ↓
+[Execute] → Run protocol steps
+        ↓
+[Monitor] → Track progress & results
+        ↓
+ [Collect] → Automated data gathering
+        ↓
+[Adjust] → Handle errors & adapt
+        ↓
+Output: Experimental results data + execution log
 ```
 
 ## Agent Components
@@ -434,7 +475,7 @@ All agents use Python async for:
 - Non-blocking Claude API calls
 - Concurrent biomedical API queries
 - Efficient resource usage
-- Responsive web UI (Gradio)
+- Responsive CLI execution
 
 ```python
 async def run_discovery_loop(research_question):
