@@ -67,7 +67,6 @@ class BiomedicalRecord:
 # Keep legacy Paper name for backward compatibility
 Paper = BiomedicalRecord
 
-
 @dataclass
 class ResearchGap:
     """Represents an identified research gap."""
@@ -76,6 +75,19 @@ class ResearchGap:
     potential_approaches: list[str]
     priority_level: str  # high, medium, low
     confidence: float  # 0.0 to 1.0
+
+    def get(self, key, default=None):
+        """Allow dictionary-like .get() access for agent compatibility."""
+        mapping = {
+            "gap_description": self.gap_description,
+            "description": self.gap_description,
+            "related_papers": self.related_papers,
+            "potential_approaches": self.potential_approaches,
+            "priority_level": self.priority_level,
+            "priority": self.priority_level,
+            "confidence": self.confidence,
+        }
+        return mapping.get(key, default)
 
 
 class LiteratureAgent:
@@ -181,56 +193,62 @@ class LiteratureAgent:
     ) -> list[Paper]:
         """Search PubChem API for chemical compounds related to drug discovery."""
         try:
-            # First search for compounds matching the query
-            compound_params = {
-                "q": query,
-                "type": "cid",
+            # PubChem name search - use correct endpoint format
+            # Try searching by compound name
+            params = {
+                "cids": "json"
             }
 
-            response = await self.client.get(
-                f"{self.config['databases']['pubchem']['api_url']}/compound/search/json",
-                params=compound_params,
-            )
+            search_url = f"{self.config['databases']['pubchem']['api_url']}/compound/name/{query}/cids/json"
+
+            response = await self.client.get(search_url, params=params, timeout=30)
             response.raise_for_status()
 
             data = response.json()
             papers = []
-            compound_ids = data.get("IdentifierList", {}).get("CID", [])[:min(limit, 10)]
+            compound_ids = data.get("IdentifierList", {}).get("CID", [])[:min(limit, 5)]
 
-            # For each compound, get bioactivity data
+            # For each compound, get compound data
             for cid in compound_ids:
-                compound_papers = await self._fetch_pubchem_bioactivity(cid, query)
-                papers.extend(compound_papers)
+                try:
+                    compound_paper = await self._fetch_pubchem_compound(cid, query)
+                    if compound_paper:
+                        papers.append(compound_paper)
+                except Exception as e:
+                    logger.debug(f"Could not fetch compound {cid}: {e}")
 
-            logger.info(f"Found {len(papers)} compound-related records in PubChem for query: {query}")
+            logger.info(f"Found {len(papers)} compound records in PubChem for query: {query}")
             return papers
 
         except httpx.HTTPError as e:
-            logger.error(f"PubChem search failed: {e}")
-            return []
+            logger.warning(f"PubChem search failed: {e} - this is optional")
+            return []  # Return empty list instead of failing
 
-    async def _fetch_pubchem_bioactivity(self, compound_id: str, original_query: str) -> list[Paper]:
-        """Fetch bioactivity data for a PubChem compound."""
+    async def _fetch_pubchem_compound(self, compound_id: str, original_query: str) -> Optional[Paper]:
+        """Fetch compound data from PubChem."""
         try:
             response = await self.client.get(
-                f"{self.config['databases']['pubchem']['api_url']}/compound/{compound_id}/json"
+                f"{self.config['databases']['pubchem']['api_url']}/compound/cid/{compound_id}/json",
+                timeout=30
             )
             response.raise_for_status()
 
             data = response.json()
-            compound_data = data.get("PC_CompoundAssay", {})
+            if "PC_Compounds" in data and len(data["PC_Compounds"]) > 0:
+                compound_data = data["PC_Compounds"][0]
+                paper = self._parse_pubchem_compound(compound_data, compound_id, original_query)
+                return paper
 
-            papers = []
-            if compound_data:
-                paper = self._parse_pubchem_result(compound_data, compound_id, original_query)
-                if paper:
-                    papers.append(paper)
-
-            return papers
+            return None
 
         except httpx.HTTPError as e:
-            logger.warning(f"Failed to fetch PubChem bioactivity for CID {compound_id}: {e}")
-            return []
+            logger.debug(f"Failed to fetch PubChem compound {compound_id}: {e}")
+            return None
+
+    async def _fetch_pubchem_bioactivity(self, compound_id: str, original_query: str) -> list[Paper]:
+        """Fetch bioactivity data for a PubChem compound (deprecated - kept for compatibility)."""
+        paper = await self._fetch_pubchem_compound(compound_id, original_query)
+        return [paper] if paper else []
 
     async def _search_openalex(
         self,
@@ -363,34 +381,57 @@ class LiteratureAgent:
             return None
 
     @staticmethod
-    def _parse_pubchem_result(compound_data: dict, compound_id: str, original_query: str) -> Optional[Paper]:
-        """Parse bioactivity data from PubChem compound."""
+    def _parse_pubchem_compound(compound_data: dict, compound_id: str, original_query: str) -> Optional[Paper]:
+        """Parse compound data from PubChem REST API."""
         try:
-            # Extract compound information
-            assay_data = compound_data.get("PC_CompoundAssay_Assay", [])
-            if not assay_data:
-                return None
+            # Extract basic compound information
+            compound_info = compound_data.get("atoms", {})
+            properties = compound_data.get("props", [])
 
-            assay_info = assay_data[0] if isinstance(assay_data, list) else assay_data
+            # Extract common name and properties
+            compound_name = f"PubChem Compound {compound_id}"
+            molecular_formula = ""
+            molecular_weight = ""
 
-            assay_description = assay_info.get("description", "Compound bioactivity data from PubChem")
-            target_name = assay_info.get("target", {}).get("name", "Unknown Target")
+            for prop in properties:
+                urn = prop.get("urn", {})
+                label = urn.get("label", "")
+                value = prop.get("value", {}).get("sval", "")
+
+                if "Molecular Formula" in label:
+                    molecular_formula = value
+                elif "Molecular Weight" in label:
+                    molecular_weight = value
+                elif "Compound Name" in label or label == "Name":
+                    compound_name = value
+
+            abstract = f"Chemical compound related to '{original_query}'. "
+            if molecular_formula:
+                abstract += f"Formula: {molecular_formula}. "
+            if molecular_weight:
+                abstract += f"Molecular Weight: {molecular_weight}."
 
             return Paper(
-                title=f"Bioactivity Study: {original_query} (CID: {compound_id})",
+                title=f"{compound_name} (CID: {compound_id})",
                 authors=["PubChem Database"],
                 publication_year=2024,
                 journal="PubChem",
                 doi=None,
-                abstract=assay_description,
+                abstract=abstract,
                 citations_count=0,
-                compound_cids=[compound_id],
-                molecular_targets=[target_name],
-                assay_types=[assay_info.get("assayType", "Unknown")],
-                organism_studied=assay_info.get("organism", ""),
+                compound_cids=[str(compound_id)],
+                molecular_targets=[],  # Would need additional API call to get targets
+                assay_types=["chemical_database"],
+                organism_studied="",
             )
-        except (KeyError, TypeError, IndexError):
+        except (KeyError, TypeError, IndexError) as e:
+            logger.debug(f"Error parsing PubChem compound {compound_id}: {e}")
             return None
+
+    @staticmethod
+    def _parse_pubchem_result(compound_data: dict, compound_id: str, original_query: str) -> Optional[Paper]:
+        """Parse bioactivity data from PubChem compound (legacy)."""
+        return BiomedicalRecord._parse_pubchem_compound(compound_data, compound_id, original_query)
 
     @staticmethod
     def _parse_openalex_result(result: dict) -> Optional[Paper]:
