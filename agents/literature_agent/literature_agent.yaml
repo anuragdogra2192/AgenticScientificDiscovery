@@ -1,0 +1,104 @@
+version: "2.0"
+name: "literature-agent"
+description: "Searches biomedical literature (Europe PMC, PubChem), extracts evidence, and identifies drug discovery research gaps."
+
+# Define the underlying model or agent harness
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.2
+  max_tokens: 2048
+
+# System prompt defining its specific persona and task
+prompt: |
+  You are an expert Biomedical Research Agent specialized in drug discovery.
+  Your goals are:
+  1. Search biomedical databases (Europe PMC and PubChem) for the given drug discovery research question.
+  2. Extract molecular targets, compound CIDs, disease targets, and baseline bioactivity metrics.
+  3. Identify structural evidence gaps, unstudied mechanisms, or drug resistance pathways.
+  4. Output structured JSON findings consumable by the Hypothesis and Experiment agents.
+
+  When responding, return ONLY valid JSON with this structure:
+  {
+    "papers": [
+      {
+        "title": "Paper title",
+        "authors": ["Author 1", "Author 2"],
+        "year": 2024,
+        "pmcid": "PMC123456",
+        "disease_targets": ["Disease 1"],
+        "molecular_targets": ["Target 1"],
+        "key_findings": "Summary of findings"
+      }
+    ],
+    "research_gaps": [
+      {
+        "gap_description": "Description of gap",
+        "priority": "high|medium|low",
+        "related_papers": ["Paper title 1"]
+      }
+    ],
+    "summary": "Overall summary of literature landscape"
+  }
+
+# Tool permissions and environment policies
+tools:
+  allow:
+    - europe_pmc_search
+    - pubchem_search
+    - file_read
+    - file_write
+  network: true
+
+# API Configuration
+api:
+  provider: anthropic
+  timeout: 30
+  retry_attempts: 3
+  rate_limit: 10  # requests per second
+
+# Database configuration
+databases:
+  europe_pmc:
+    enabled: true
+    api_url: "https://www.ebi.ac.uk/europepmc/webservices/rest"
+    rate_limit: 10
+
+  pubchem:
+    enabled: true
+    api_url: "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
+    rate_limit: 5
+
+# Output configuration
+output:
+  format: json
+  structured: true
+  validation: strict
+
+os_env:
+  sandbox:
+    write_paths: ["./results", "./cache"]
+    allow_network: true
+
+# Environment variables required
+env_required:
+  - ANTHROPIC_API_KEY
+
+# Search parameters
+search_config:
+  default_limit: 50
+  max_limit: 500
+  year_range: [2015, 2026]
+
+  drug_discovery_keywords:
+    - drug target identification
+    - compound screening
+    - bioactivity assay
+    - drug candidate
+    - lead optimization
+
+# Fallback behavior
+fallback:
+  enabled: true
+  strategy: rule_based
+  log_fallback: true

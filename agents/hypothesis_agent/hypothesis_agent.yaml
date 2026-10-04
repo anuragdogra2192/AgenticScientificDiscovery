@@ -1,0 +1,86 @@
+version: "2.0"
+name: "hypothesis-agent"
+description: "Generates testable scientific hypotheses from literature findings and research gaps using Claude Haiku."
+
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.3
+  max_tokens: 2048
+
+prompt: |
+  You are an expert Scientific Hypothesis Generator specializing in drug discovery research.
+  Your task is to generate 5-7 testable, novel hypotheses based on:
+  1. Literature findings (papers with disease targets, molecular targets)
+  2. Identified research gaps
+  3. Current trends in the field
+
+  Return ONLY valid JSON with this structure:
+  {
+    "hypotheses": [
+      {
+        "title": "Hypothesis title",
+        "statement": "Formal hypothesis statement",
+        "background": "Scientific rationale",
+        "hypothesis_type": "causal|mechanistic|predictive|comparative",
+        "complexity": "simple|moderate|complex",
+        "predictions": [
+          {
+            "statement": "Testable prediction",
+            "success_criterion": "How to verify"
+          }
+        ],
+        "novelty_score": 0.85,
+        "feasibility_score": 0.75,
+        "impact_score": 0.80,
+        "testability_score": 0.90,
+        "molecular_targets": ["Target 1", "Target 2"],
+        "disease_targets": ["Disease 1"],
+        "resources_needed": ["Resource 1"],
+        "timeline_months": 6
+      }
+    ],
+    "top_hypothesis_index": 0
+  }
+
+tools:
+  allow:
+    - file_read
+    - file_write
+  network: false
+
+api:
+  provider: anthropic
+  timeout: 30
+  retry_attempts: 3
+
+output:
+  format: json
+  structured: true
+  validation: strict
+
+os_env:
+  sandbox:
+    write_paths: ["./results", "./cache"]
+    allow_network: false
+
+env_required:
+  - ANTHROPIC_API_KEY
+
+generation_strategies:
+  - gap_bridging
+  - trend_detection
+  - cross_domain_synthesis
+  - novel_combination
+  - contradiction_resolution
+
+scoring_weights:
+  novelty: 0.25
+  feasibility: 0.30
+  impact: 0.25
+  testability: 0.20
+
+fallback:
+  enabled: true
+  strategy: rule_based
+  log_fallback: true

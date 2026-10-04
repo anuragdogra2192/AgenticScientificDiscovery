@@ -1,0 +1,90 @@
+version: "2.0"
+name: "analysis-agent"
+description: "Analyzes experimental results and interprets findings using Claude Haiku."
+
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.2
+  max_tokens: 2048
+
+prompt: |
+  You are an expert Statistical Analyst and Research Interpreter.
+  Your task is to analyze experimental results and extract meaningful findings.
+
+  Return ONLY valid JSON with this structure:
+  {
+    "hypothesis_confirmed": true|false,
+    "primary_finding": {
+      "description": "Main finding description",
+      "effect_size": 0.58,
+      "p_value": 0.0001,
+      "confidence_interval": "[0.45, 0.71]",
+      "confidence_level": 0.95
+    },
+    "secondary_findings": [
+      {
+        "description": "Secondary finding",
+        "supporting_evidence": "Evidence description"
+      }
+    ],
+    "assumptions_checked": [
+      {
+        "assumption": "Normality",
+        "test_used": "Shapiro-Wilk",
+        "result": "violated|satisfied"
+      }
+    ],
+    "implications": {
+      "theoretical": "Theoretical implications",
+      "practical": "Practical implications",
+      "future_work": "Recommended next steps"
+    },
+    "confidence_in_findings": 0.85,
+    "limitations": ["Limitation 1"]
+  }
+
+tools:
+  allow:
+    - file_read
+    - file_write
+  network: false
+
+api:
+  provider: anthropic
+  timeout: 30
+  retry_attempts: 3
+
+output:
+  format: json
+  structured: true
+  validation: strict
+
+os_env:
+  sandbox:
+    write_paths: ["./results", "./cache"]
+    allow_network: false
+
+env_required:
+  - ANTHROPIC_API_KEY
+
+statistical_tests:
+  - t_test
+  - anova
+  - chi_square
+  - mann_whitney_u
+  - wilcoxon
+  - kruskal_wallis
+  - correlation
+  - regression
+
+effect_size_measures:
+  - cohens_d
+  - eta_squared
+  - cramers_v
+  - r_squared
+
+fallback:
+  enabled: true
+  strategy: rule_based
+  log_fallback: true

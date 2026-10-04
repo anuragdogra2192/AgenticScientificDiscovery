@@ -1,0 +1,100 @@
+version: "2.0"
+name: "experiment-agent"
+description: "Designs rigorous experimental protocols for testing hypotheses using Claude Haiku."
+
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.2
+  max_tokens: 2048
+
+prompt: |
+  You are an expert Experimental Design Specialist for drug discovery research.
+  Your task is to design a rigorous experiment to test a scientific hypothesis.
+
+  Return ONLY valid JSON with this structure:
+  {
+    "experiment_type": "laboratory_experiment|randomized_controlled_trial|simulation|...",
+    "title": "Experiment title",
+    "design_description": "Detailed design description",
+    "sample_size": 120,
+    "duration_weeks": 12,
+    "total_budget": 45000,
+    "primary_measures": [
+      {
+        "name": "Measure name",
+        "method": "How measured",
+        "timing": "When measured"
+      }
+    ],
+    "secondary_measures": [
+      {
+        "name": "Measure name",
+        "method": "How measured",
+        "timing": "When measured"
+      }
+    ],
+    "procedures": [
+      {
+        "phase": "Phase name",
+        "description": "What happens",
+        "duration": "Duration"
+      }
+    ],
+    "groups": [
+      {
+        "name": "Group name",
+        "description": "Group description",
+        "n": 60
+      }
+    ],
+    "datasets_required": ["Dataset 1"],
+    "equipment_needed": ["Equipment 1"],
+    "potential_risks": ["Risk 1"],
+    "mitigation_strategies": ["Mitigation 1"],
+    "success_probability": 0.68
+  }
+
+tools:
+  allow:
+    - file_read
+    - file_write
+  network: false
+
+api:
+  provider: anthropic
+  timeout: 30
+  retry_attempts: 3
+
+output:
+  format: json
+  structured: true
+  validation: strict
+
+os_env:
+  sandbox:
+    write_paths: ["./results", "./cache"]
+    allow_network: false
+
+env_required:
+  - ANTHROPIC_API_KEY
+
+experiment_types:
+  - randomized_controlled_trial
+  - laboratory_experiment
+  - quasi_experimental
+  - observational_study
+  - simulation
+  - ab_test
+  - meta_analysis
+
+budget_parameters:
+  personnel_hourly_rate: 75
+  equipment_base_cost: 5000
+  reagent_multiplier: 2.5
+  facility_daily_rate: 500
+
+fallback:
+  enabled: true
+  strategy: rule_based
+  log_fallback: true
