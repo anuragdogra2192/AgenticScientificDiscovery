@@ -242,15 +242,27 @@ report = await agent.generate_report(
 
 ## 📊 Data Sources
 
-### Free, No-Auth APIs
+### Biomedical Literature & Chemical Databases
 
-| Database | Papers | Coverage | Rate Limit |
-|----------|--------|----------|-----------|
-| OpenAlex | 250M+ | Broad (all disciplines) | 10 req/s |
-| arXiv | 2.3M+ | Physics, CS, Math, Stats | 3 req/s |
-| Semantic Scholar | 200M+ | ML-enhanced search | 1 req/s |
+| Source | Coverage | Focus | Authentication |
+|--------|----------|-------|-----------------|
+| **Europe PMC API** | 50M+ biomedical papers | Mycobacterium tuberculosis drug discovery | Free, no auth |
+| **PubChem API** | 200M+ chemical compounds | Drug compounds, structures, properties | Free, no auth |
+| **Claude Haiku 4.5** | Training data to 2024 | AI-powered analysis, hypothesis generation, experiment design | API key required |
 
-All APIs are free and require no authentication.
+### Data Integration
+
+- **Literature Agent**: Queries Europe PMC for Mtb-focused publications and PubChem for chemical compound data
+- **Hypothesis Agent**: Uses Claude to analyze literature patterns and generate DprE1, InhA, MmpL3 targeting hypotheses
+- **Experiment Agent**: Uses Claude to design BSL-3 protocols optimized for Mtb targets with budget validation
+- **Analysis Agent**: Uses Claude to interpret MIC values, Selectivity Index, and intracellular assay results
+- **Report Agent**: Uses Claude to synthesize publication-ready APA-formatted papers
+- **Knowledge Graph Agent**: Uses Claude to extract entities and relationships from all discovery phases
+
+### No Rate Limiting Constraints
+- Europe PMC API: Unlimited queries with respectful usage
+- PubChem API: High request limits for automated access
+- Claude API: Bounded by token usage (budget-aware)
 
 ## 🎓 Use Cases
 
