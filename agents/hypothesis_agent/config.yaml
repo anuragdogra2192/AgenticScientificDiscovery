@@ -1,0 +1,227 @@
+name: Hypothesis Agent
+description: Generate and rank testable scientific hypotheses from literature insights
+version: "1.0.0"
+
+# Core agent configuration
+agent:
+  type: specialist
+  role: insight_generator
+  capabilities:
+    - literature_analysis
+    - hypothesis_generation
+    - hypothesis_ranking
+    - novelty_detection
+    - feasibility_assessment
+    - impact_scoring
+
+# Input sources
+input:
+  primary_source: literature_agent
+  required_fields:
+    - papers
+    - research_gaps
+    - query
+  optional_fields:
+    - domain_knowledge
+    - constraints
+    - resources
+
+# Hypothesis generation strategies
+generation_strategies:
+
+  gap_bridging:
+    description: Propose hypotheses that directly address identified gaps
+    weight: 0.25
+    methods:
+      - gap_to_hypothesis
+      - gap_combination
+      - progressive_research
+
+  trend_detection:
+    description: Identify emerging patterns and propose their implications
+    weight: 0.2
+    methods:
+      - citation_trend_analysis
+      - methodological_evolution
+      - domain_intersection
+
+  contradiction_resolution:
+    description: Propose hypotheses to resolve conflicting findings
+    weight: 0.2
+    methods:
+      - conflict_detection
+      - boundary_conditions
+      - unifying_theories
+
+  cross_domain_synthesis:
+    description: Transfer successful approaches from other fields
+    weight: 0.2
+    methods:
+      - domain_mapping
+      - technique_transfer
+      - analogy_based
+
+  novel_combination:
+    description: Combine existing concepts in new ways
+    weight: 0.15
+    methods:
+      - concept_clustering
+      - semantic_similarity
+      - novelty_scoring
+
+# Hypothesis evaluation criteria
+evaluation:
+  novelty:
+    description: How new is this hypothesis?
+    weight: 0.25
+    factors:
+      - literature_coverage
+      - concept_overlap
+      - claim_uniqueness
+
+  feasibility:
+    description: Can we actually test this?
+    weight: 0.3
+    factors:
+      - data_availability
+      - technical_requirements
+      - time_constraints
+      - cost_estimates
+
+  impact:
+    description: If true, how important would this be?
+    weight: 0.25
+    factors:
+      - field_relevance
+      - problem_importance
+      - potential_applications
+
+  testability:
+    description: Can we design clear tests?
+    weight: 0.2
+    factors:
+      - measurability
+      - falsifiability
+      - experimental_design_clarity
+
+# Hypothesis structure
+hypothesis_format:
+  required_fields:
+    - id: Unique identifier
+    - title: Clear, concise hypothesis statement
+    - statement: Formal hypothesis (if X, then Y)
+    - background: Why this matters
+    - predictions: Specific testable predictions
+    - assumptions: Key assumptions
+    - variables:
+        independent: What we manipulate
+        dependent: What we measure
+        control: What we keep constant
+
+  optional_fields:
+    - alternative_hypotheses: Other possible explanations
+    - risk_factors: Potential pitfalls
+    - related_work: Connected literature
+    - preliminary_evidence: Any initial support
+    - resources_needed: Data, equipment, expertise
+    - timeline_estimate: How long to test
+    - success_criteria: How to know if confirmed
+
+# Ranking and filtering
+ranking:
+  method: weighted_scoring
+  top_k: 10
+  diversity_boost: true  # Ensure diverse hypothesis types
+
+  filters:
+    min_novelty_score: 0.4
+    min_feasibility_score: 0.5
+    min_impact_score: 0.4
+    min_testability_score: 0.5
+
+  diversity_metrics:
+    - hypothesis_type
+    - domain_area
+    - methodology
+    - variable_types
+
+# Knowledge base
+knowledge_base:
+  concept_relationships: true  # Track how concepts relate
+  semantic_similarity: true     # Use embeddings/similarity
+  domain_hierarchy: true        # Understand field structure
+
+  available_domains:
+    - machine_learning
+    - biology
+    - physics
+    - chemistry
+    - neuroscience
+    - materials_science
+    - climate_science
+    - social_science
+
+# Synthesis capabilities
+synthesis:
+
+  narrative_generation:
+    detailed_background: true
+    include_examples: true
+    reference_style: inline
+
+  hypothesis_combinations:
+    enable_meta_hypotheses: true  # Hypotheses about hypotheses
+    dependency_tracking: true     # Track cross-hypotheses
+
+  alternative_formulations:
+    provide_alternatives: true
+    null_hypothesis: true
+    directional_variants: true
+
+# Output formats
+output:
+  formats:
+    - json
+    - markdown
+    - structured_report
+
+  include_scoring_rationale: true
+  include_confidence_intervals: true
+  include_research_design_sketch: true
+
+# Constraints and configuration
+constraints:
+  max_hypotheses_to_generate: 50
+  min_hypothesis_length: 50  # characters
+  max_hypothesis_length: 500
+
+  complexity_levels:
+    - simple      # Single variable relationship
+    - moderate    # Multiple variables, one mechanism
+    - complex     # Multi-mechanism, conditional effects
+
+  required_precision:
+    measurable: true           # Must measure something
+    falsifiable: true          # Must be testable
+    timely: true              # Must be testable in reasonable time
+
+# Quality assurance
+quality_assurance:
+  check_logical_consistency: true
+  check_empirical_grounding: true
+  check_coherence_with_literature: true
+  validate_variable_definitions: true
+
+  fail_criteria:
+    - circular_reasoning
+    - unfalsifiable_claims
+    - missing_variables
+    - contradictions
+
+# Monitoring and logging
+monitoring:
+  log_level: INFO
+  track_generation_stats: true
+  track_hypothesis_diversity: true
+  track_scoring_components: true
+  profile_performance: true
