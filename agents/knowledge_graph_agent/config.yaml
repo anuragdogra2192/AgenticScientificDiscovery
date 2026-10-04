@@ -1,0 +1,70 @@
+version: "2.0"
+name: "knowledge-graph-agent"
+description: "Builds semantic knowledge graphs from research discovery artifacts using Claude Haiku."
+
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.2
+  max_tokens: 2048
+
+prompt: |
+  You are an expert Knowledge Graph Builder specializing in scientific discovery.
+  Your task is to extract structured entities and relationships from research artifacts.
+
+  Return ONLY valid JSON with entities (hypothesis, target, compound, disease, finding, methodology)
+  and relationships (targets, treats, inhibits, activates, associates_with, confirmed_by, contradicts, builds_on).
+
+tools:
+  allow:
+    - file_read
+    - file_write
+  network: false
+
+api:
+  provider: anthropic
+  timeout: 30
+  retry_attempts: 3
+
+output:
+  format: json
+  structured: true
+  validation: strict
+
+os_env:
+  sandbox:
+    write_paths: ["./results", "./cache"]
+    allow_network: false
+
+env_required:
+  - ANTHROPIC_API_KEY
+
+entity_types:
+  - hypothesis
+  - target
+  - compound
+  - disease
+  - finding
+  - methodology
+  - author
+  - publication
+
+relationship_types:
+  - targets
+  - treats
+  - inhibits
+  - activates
+  - associates_with
+  - confirmed_by
+  - contradicts
+  - builds_on
+
+export_formats:
+  - rdf_xml
+  - turtle
+  - json_ld
+
+fallback:
+  enabled: true
+  strategy: rule_based
+  log_fallback: true
