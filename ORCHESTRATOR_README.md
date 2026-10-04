@@ -11,12 +11,12 @@ The **Master Orchestrator** connects all 6 specialist agents into a seamless, in
                             ↓
         ┌───────────────────────────────────────┐
         │   📚 PHASE 1: LITERATURE DISCOVERY   │
-        │   Search papers, identify gaps        │
+        │   Europe PMC & PubChem search        │
         └───────────────────────┬───────────────┘
                                 ↓
         ┌───────────────────────────────────────┐
         │   💡 PHASE 2: HYPOTHESIS GENERATION  │
-        │   Generate and score ideas            │
+        │   Generate and score ideas (Claude)   │
         └───────────────────────┬───────────────┘
                                 ↓
                     ┌──────────────────┐
@@ -31,7 +31,12 @@ The **Master Orchestrator** connects all 6 specialist agents into a seamless, in
                             ↓
         ┌───────────────────────────────────────┐
         │   🧪 PHASE 3: EXPERIMENT DESIGN      │
-        │   Protocol, budget, timeline          │
+        │   BSL-3 protocol, budget (Claude)     │
+        └───────────────────────┬───────────────┘
+                                ↓
+        ┌───────────────────────────────────────┐
+        │   📋 PHASE 4: EXPERIMENT PLANNING    │
+        │   Multi-protocol comparative design   │
         └───────────────────────┬───────────────┘
                                 ↓
                     ┌──────────────────────┐
@@ -41,22 +46,27 @@ The **Master Orchestrator** connects all 6 specialist agents into a seamless, in
                    Approved ↙    ↘ Rejected
                       ↙            ↘
                     ↙ YES       NO  ↘ STOP
-                   ↙                  
+                   ↙
         ┌───────────────────────────────────────┐
-        │   📊 PHASE 4: RESULT ANALYSIS        │
-        │   Statistics, findings, implications  │
+        │   🏃 PHASE 5: EXPERIMENT EXECUTION   │
+        │   Run protocol, collect data          │
         └───────────────────────┬───────────────┘
                                 ↓
         ┌───────────────────────────────────────┐
-        │   📝 PHASE 5: REPORT GENERATION      │
-        │   Publication-ready paper             │
+        │   📊 PHASE 6: RESULT ANALYSIS        │
+        │   Statistics, SI validation (Claude)  │
         └───────────────────────┬───────────────┘
                                 ↓
-                    ┌──────────────────┐
-                    │ 🌐 KNOWLEDGE GRAPH│
-                    │ Export & Update  │
-                    └────────┬─────────┘
-                            ↓
+        ┌───────────────────────────────────────┐
+        │   📝 PHASE 7: REPORT GENERATION      │
+        │   APA-formatted paper (Claude)        │
+        └───────────────────────┬───────────────┘
+                                ↓
+        ┌───────────────────────────────────────┐
+        │   🧬 PHASE 8: KNOWLEDGE GRAPH        │
+        │   Extract entities, RDF export        │
+        └───────────────────────┬───────────────┘
+                                ↓
                   ✅ COMPLETE & READY
 ```
 
