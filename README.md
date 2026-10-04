@@ -1,4 +1,4 @@
-# 🔬 Agentic Scientific Discovery Lab
+# 🔬 Agentic Scientific Discovery Lab - Team NextExperiment
 
 An AI-powered lab for accelerating scientific discovery through specialized agents that search literature, generate hypotheses, design experiments, and analyze results—all autonomously.
 
@@ -98,87 +98,49 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Run the Literature Agent
-```bash
-python agents/literature_agent/agent.py
-```
+### Configure Claude API
 
-### Try the Examples
-```bash
-python agents/literature_agent/examples.py
-```
-
-### Use in Your Code
-```python
-import asyncio
-from agents.literature_agent import LiteratureAgent
-
-async def main():
-    agent = LiteratureAgent()
-    
-    # Search for papers
-    papers = await agent.search_papers(
-        "your research topic",
-        year_range=(2023, 2026),
-        limit=50
-    )
-    
-    # Identify research gaps
-    gaps = await agent.identify_gaps(papers)
-    
-    # Generate report
-    report = await agent.generate_report("your topic", papers, gaps)
-    
-    await agent.close()
-
-asyncio.run(main())
-```
-
-### Run the Complete Discovery Loop
-
-Run the full 6-phase Mtb drug discovery pipeline:
+Create a `.env.local` file in the project root with your Anthropic API key:
 
 ```bash
-# CLI mode with auto-approval of experiment design
+# Create .env.local file
+cat > .env.local << 'EOF'
+# Anthropic Claude API Configuration
+# Get your API key from: https://console.anthropic.com/api_keys
+
+# Your Anthropic API key (required for Claude Haiku integration)
+ANTHROPIC_API_KEY=sk-ant-v1-YOUR_API_KEY_HERE
+
+# Claude Model (default: claude-haiku-4-5-20251001)
+CLAUDE_MODEL=claude-haiku-4-5-20251001
+
+# Request timeout in seconds (default: 30)
+CLAUDE_TIMEOUT=30
+
+# Enable detailed logging (true/false)
+CLAUDE_DEBUG=false
+
+# Max tokens per request (default: 2048)
+CLAUDE_MAX_TOKENS=2048
+EOF
+```
+
+**Setup Steps:**
+1. Get your API key from [console.anthropic.com/api_keys](https://console.anthropic.com/api_keys)
+2. Replace `YOUR_API_KEY_HERE` with your actual key (format: `sk-ant-v1-...`)
+3. Save the file (`.env.local` is protected by `.gitignore` — never commit it)
+4. Verify setup with: `python setup_claude.py`
+
+**Note:** If `.env.local` is missing, the system falls back to rule-based logic (no Claude API calls).
+
+### Run the Experiment
+```bash
 python run_discovery_loop.py
-
-# Or with manual approval checkpoint
-python run_discovery_loop.py --no-auto-approve
 ```
-
-**What it does:**
-1. 📚 Searches Europe PMC & PubChem for literature on your research topic
-2. 💡 Generates 5-7 testable hypotheses targeting Mtb (DprE1, InhA, MmpL3)
-3. 🧪 Designs BSL-3 experimental protocols with budget estimation
-4. 📊 Analyzes results and validates hypothesis confirmation
-5. 📝 Generates publication-ready research paper (APA format)
-6. 🧬 Builds semantic knowledge graph for future use
-
-**Output saved to `./results/`:**
-- `workflow_state_TIMESTAMP.json` — Complete workflow state
-- `research_paper_TIMESTAMP.md` — Generated paper
-- `knowledge_graph_TIMESTAMP.json` — Semantic entities and relationships
-
-### Run the Web UI (Gradio)
-
-Interactive web interface at http://localhost:7860:
-
+### Run the custom prompt
 ```bash
-python app.py
+python run_discovery_loop.py "Allosteric covalent inhibition of DprE1 in multidrug-resistant Mycobacterium tuberculosis combined with PMA-differentiated THP-1 mammalian cytotoxicity screening to establish a high Selectivity Index (SI > 10) and bypass efflux resistance."
 ```
-
-**Features:**
-- Chat interface for research queries
-- Live progress updates (6 phases)
-- Visual workflow status
-- Download results directly
-
-## 📖 Documentation
-
-- **[Setup Guide](SETUP.md)** - Installation and configuration
-- **[Literature Agent](agents/literature_agent/README.md)** - Detailed documentation
-- **[Examples](agents/literature_agent/examples.py)** - Real-world usage patterns
-- **[Agent Config](agents/literature_agent/config.yaml)** - Configuration reference
 
 ## 🏗️ Project Structure
 
@@ -238,46 +200,6 @@ AgenticScientificDiscovery/
 ├── .gitignore                     # Git ignore rules
 └── results/                       # Workflow outputs (auto-created)
 ```
-
-## 💻 Core Capabilities
-
-### Literature Agent
-
-**Search Across Multiple Databases:**
-```python
-papers = await agent.search_papers(
-    "quantum machine learning",
-    databases=["openalex", "arxiv"],
-    year_range=(2022, 2026),
-    limit=100
-)
-```
-
-**Identify Research Gaps:**
-```python
-gaps = await agent.identify_gaps(papers)
-for gap in gaps:
-    print(f"Gap: {gap.gap_description}")
-    print(f"Priority: {gap.priority_level}")
-    print(f"Confidence: {gap.confidence:.1%}")
-```
-
-**Generate Reports:**
-```python
-report = await agent.generate_report(
-    query="your topic",
-    papers=papers,
-    gaps=gaps
-)
-# JSON structure with statistics, papers, and findings
-```
-
-## 🔧 Tech Stack
-
-- **Language**: Python 3.10+
-- **HTTP**: httpx (async)
-- **Config**: YAML
-- **APIs**: OpenAlex, arXiv, Semantic Scholar (planned)
 
 ## 📊 Data Sources
 
@@ -362,14 +284,15 @@ report = await agent.generate_report(
 - [x] Knowledge base integration
 
 ### Future Enhancements (🔄 In Progress)
-- [ ] Real experiment runner (lab hardware integration)
 - [ ] Advanced feedback loops (multi-round refinement)
 - [ ] Cost optimization (Haiku vs Opus selection)
+- [ ] More Gaurdrails and AI Governance and Safety
+- [ ] End to End Evals and observability
 - [ ] Collaborative approval workflows (Slack/email)
 - [ ] Performance analytics dashboard
 - [ ] Persistent knowledge accumulation database
-
-## 📚 Resources
+- [ ] WebUI
+- [ ] Real experiment runner (lab hardware integration)
 
 ## 📄 License
 
