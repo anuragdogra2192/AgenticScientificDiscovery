@@ -41,19 +41,45 @@ Designs and simulates experiments to test hypotheses.
 - Simulates experiments (when applicable)
 - Predicts outcome scenarios
 
-### 4. 📊 **Analysis Agent** (🚧 Coming Soon)
-Analyzes experimental results and extracts insights.
-- Statistical significance testing
-- Result visualization
+### 4. 📊 **Analysis Agent** (✅ Live)
+Analyzes experimental results and extracts insights using Claude Haiku 4.5.
+- Statistical significance testing (t-tests, ANOVA, Mann-Whitney U)
+- MIC reduction and Selectivity Index (SI) interpretation
+- Hypothesis confirmation with confidence levels
 - Comparison with literature findings
-- Generates conclusions
+- Implications for in vivo testing
 
-### 5. 📝 **Report Agent** (🚧 Coming Soon)
-Synthesizes findings into research papers.
-- Structures results into papers
-- Generates visualizations
-- Suggests additional experiments
-- Identifies follow-up research
+### 5. 📝 **Report Agent** (✅ Live)
+Synthesizes findings into publication-ready research papers using Claude.
+- APA-formatted paper generation
+- Structures results into paper sections (Abstract, Methods, Results, Discussion)
+- Generates citations and references
+- Exports to Markdown, JSON, and HTML formats
+- Identifies follow-up research directions
+
+### 6. 🧬 **Knowledge Graph Agent** (✅ Live)
+Extracts semantic relationships from discoveries.
+- Entity extraction (targets, compounds, findings, diseases)
+- Relationship mapping (targets, inhibits, associates_with, etc.)
+- Exports to RDF, Turtle, and JSON-LD formats
+- Integrates with external knowledge bases
+- Enables future refinement and cross-linking
+
+### 7. 📋 **Experiment Planner Agent** (✅ Live)
+Designs multi-protocol comparative experiments.
+- Comparative protocol design for complex hypotheses
+- Protocol selection and optimization
+- Budget-aware experimental planning
+- Supports 3-5 parallel experimental approaches
+- Validates comparative design rigor
+
+### 8. 🏃 **Experiment Runner Agent** (✅ Live)
+Executes and monitors experimental protocols.
+- Protocol step execution tracking
+- Real-time result monitoring (when connected to lab hardware)
+- Automated data collection and logging
+- Error handling and protocol adjustments
+- Integration with lab management systems (planned)
 
 ## 🚀 Quick Start
 
@@ -114,17 +140,58 @@ asyncio.run(main())
 ```
 AgenticScientificDiscovery/
 ├── agents/
-│   ├── __init__.py
-│   └── literature_agent/          # Literature search & analysis
-│       ├── agent.py               # Main implementation
-│       ├── config.yaml            # Configuration
-│       ├── examples.py            # Usage examples
-│       ├── __init__.py
-│       └── README.md              # Documentation
+│   ├── literature_agent/          # 📚 Literature search & gap identification
+│   │   ├── agent.py               # LiteratureAgent (Claude-powered)
+│   │   ├── literature_agent.yaml  # Configuration
+│   │   └── examples_drug_discovery.py
+│   │
+│   ├── hypothesis_agent/          # 💡 Hypothesis generation & scoring
+│   │   ├── agent.py               # HypothesisAgent (Claude-powered)
+│   │   ├── hypothesis_agent.yaml  # Configuration
+│   │   └── examples.py
+│   │
+│   ├── experiment_agent/          # 🧪 Experiment design
+│   │   ├── agent.py               # ExperimentAgent (Claude-powered)
+│   │   ├── experiment_agent.yaml  # Configuration
+│   │   └── examples.py
+│   │
+│   ├── experiment_planner/        # 📋 Multi-protocol comparative design
+│   │   ├── agent.py               # ExperimentPlannerAgent
+│   │   ├── experiment_planner.yaml
+│   │   └── examples.py
+│   │
+│   ├── experiment_runner/         # 🏃 Protocol execution
+│   │   ├── agent.py               # ExperimentRunnerAgent
+│   │   ├── experiment_runner.yaml
+│   │   └── examples.py
+│   │
+│   ├── analysis_agent/            # 📊 Statistical analysis
+│   │   ├── agent.py               # AnalysisAgent (Claude-powered)
+│   │   ├── analysis_agent.yaml    # Configuration
+│   │   └── examples.py
+│   │
+│   ├── report_agent/              # 📝 Paper generation
+│   │   ├── agent.py               # ReportAgent (Claude-powered)
+│   │   ├── report_agent.yaml      # Configuration
+│   │   └── examples.py
+│   │
+│   └── knowledge_graph_agent/     # 🧬 Knowledge extraction
+│       ├── agent.py               # KnowledgeGraphAgent (Claude-powered)
+│       ├── knowledge_graph_agent.yaml
+│       └── examples.py
+│
+├── run_discovery_loop.py          # Master Orchestrator (CLI)
+├── app.py                         # Gradio Web UI
+├── orchestrator_config.yaml       # Orchestration config
 ├── requirements.txt               # Python dependencies
+├── CLAUDE.md                      # Claude Code guidance
+├── ARCHITECTURE.md                # System architecture
+├── ORCHESTRATOR_README.md         # Orchestration details
 ├── README.md                      # This file
 ├── SETUP.md                       # Setup guide
-└── .git/                          # Version control
+├── .env.local.example             # Environment template
+├── .gitignore                     # Git ignore rules
+└── results/                       # Workflow outputs (auto-created)
 ```
 
 ## 💻 Core Capabilities
@@ -202,34 +269,48 @@ All APIs are free and require no authentication.
 ## 🚦 Roadmap
 
 ### Phase 1: Literature (✅ Complete)
-- [x] Multi-database search
+- [x] Europe PMC & PubChem search
 - [x] Paper parsing and extraction
-- [x] Research gap identification
+- [x] Research gap identification with Claude
 - [x] Literature review generation
 
-### Phase 2: Hypothesis Generation (🔄 In Progress)
-- [ ] Literature pattern analysis
-- [ ] Hypothesis generation
-- [ ] Feasibility assessment
-- [ ] Novelty scoring
+### Phase 2: Hypothesis Generation (✅ Complete)
+- [x] Literature pattern analysis
+- [x] Hypothesis generation (Claude Haiku 4.5)
+- [x] Feasibility assessment
+- [x] Novelty, feasibility, impact, testability scoring
 
-### Phase 3: Experiment Design (🚧 Planned)
-- [ ] Experimental protocol generation
-- [ ] Dataset recommendations
-- [ ] Simulation capabilities
-- [ ] Success prediction
+### Phase 3: Experiment Design (✅ Complete)
+- [x] BSL-3 experimental protocol generation (Claude)
+- [x] Budget estimation and validation
+- [x] Comparative protocol planning
+- [x] Success prediction and risk assessment
 
-### Phase 4: Analysis (🚧 Planned)
-- [ ] Statistical testing
-- [ ] Result interpretation
-- [ ] Literature contextualization
-- [ ] Finding extraction
+### Phase 4: Analysis (✅ Complete)
+- [x] Statistical testing (t-test, ANOVA, Mann-Whitney U)
+- [x] MIC reduction & Selectivity Index analysis
+- [x] Hypothesis confirmation with confidence
+- [x] Literature contextualization
 
-### Phase 5: Reporting (🚧 Planned)
-- [ ] Paper generation
-- [ ] Visualization creation
-- [ ] Citation management
-- [ ] Collaboration tools
+### Phase 5: Reporting (✅ Complete)
+- [x] Publication-ready paper generation (Claude)
+- [x] APA-formatted citations
+- [x] Multi-format export (Markdown, JSON, HTML)
+- [x] Visualization and table generation
+
+### Phase 6: Knowledge Graph (✅ Complete)
+- [x] Entity extraction (targets, compounds, findings)
+- [x] Relationship mapping
+- [x] RDF/Turtle/JSON-LD export
+- [x] Knowledge base integration
+
+### Future Enhancements (🔄 In Progress)
+- [ ] Real experiment runner (lab hardware integration)
+- [ ] Advanced feedback loops (multi-round refinement)
+- [ ] Cost optimization (Haiku vs Opus selection)
+- [ ] Collaborative approval workflows (Slack/email)
+- [ ] Performance analytics dashboard
+- [ ] Persistent knowledge accumulation database
 
 ## 🤝 Contributing
 
