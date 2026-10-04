@@ -27,19 +27,25 @@ Searches scientific databases, extracts evidence, and identifies research gaps.
 **Status**: Fully implemented and ready to use
 **[Learn more →](agents/literature_agent/README.md)**
 
-### 2. 💡 **Hypothesis Agent** (🚧 Coming Soon)
-Generates novel hypotheses based on literature and identifies promising research directions.
-- Analyzes literature patterns and gaps
-- Suggests novel research questions
-- Ranks hypotheses by feasibility and impact
-- Connects disparate domains
+### 2. 💡 **Hypothesis Agent** (✅ Available)
+Generates novel hypotheses based on literature using Claude Haiku 4.5.
+- Analyzes literature patterns and gaps with AI intelligence
+- Generates 5-7 novel hypotheses targeting Mtb drug discovery
+- Ranks hypotheses by novelty, feasibility, impact, and testability
+- Returns structured scoring for decision making
 
-### 3. 🧪 **Experiment Agent** (🚧 Coming Soon)
-Designs and simulates experiments to test hypotheses.
-- Generates experimental protocols
-- Suggests datasets and tools
-- Simulates experiments (when applicable)
-- Predicts outcome scenarios
+**Status**: Fully implemented with Claude integration and graceful fallback
+**[Learn more →](agents/hypothesis_agent/README.md)**
+
+### 3. 🧪 **Experiment Agent** (✅ Available)
+Designs rigorous BSL-3 experimental protocols using Claude Haiku 4.5.
+- Generates BSL-3 experimental protocols for Mtb targets
+- Estimates sample sizes, budgets, and timelines
+- Includes safety considerations and risk assessment
+- Validates against budget constraints (<$100k)
+
+**Status**: Fully implemented with Claude integration and graceful fallback
+**[Learn more →](agents/experiment_agent/README.md)**
 
 ### 4. 📊 **Analysis Agent** (✅ Live)
 Analyzes experimental results and extracts insights using Claude Haiku 4.5.
