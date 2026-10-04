@@ -13,9 +13,7 @@ requests==2.34.2
 
 # AI/ML - Claude Haiku 4.5 integration
 anthropic==1.11.0
-
-# Web UI - Gradio interface
-gradio==6.29.1
+omnigent>=0.1.0
 
 # Data processing and analysis
 numpy>=1.24.0
