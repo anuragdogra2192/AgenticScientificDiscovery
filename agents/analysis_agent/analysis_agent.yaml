@@ -1,47 +1,34 @@
 version: "2.0"
 name: "analysis-agent"
-description: "Analyzes experimental results and interprets findings using Claude Haiku."
+description: "Evaluates Mycobacterium tuberculosis assay results, statistical significance, and pharmacological findings using Claude Haiku."
 
 executor:
   harness: claude-sdk
   model: claude-haiku-4-5-20251001
   temperature: 0.2
-  max_tokens: 2048
+  max_tokens: 4096
 
 prompt: |
-  You are an expert Statistical Analyst and Research Interpreter.
-  Your task is to analyze experimental results and extract meaningful findings.
+  You are an expert Statistical Analyst and Pharmacological Interpreter specializing in Mycobacterium tuberculosis (Mtb) research.
+  Your task is to analyze assay results (MIC, intracellular survival, target binding) and extract meaningful findings.
 
   Return ONLY valid JSON with this structure:
   {
-    "hypothesis_confirmed": true|false,
+    "hypothesis_confirmed": true,
+    "confirmation_strength": "strong",
     "primary_finding": {
-      "description": "Main finding description",
-      "effect_size": 0.58,
-      "p_value": 0.0001,
-      "confidence_interval": "[0.45, 0.71]",
+      "title": "Significant MIC Reduction in Mtb",
+      "description": "Active inhibitor suppressed Mtb growth below threshold MIC90.",
+      "effect_size": 0.82,
+      "p_value": 0.0008,
       "confidence_level": 0.95
     },
-    "secondary_findings": [
-      {
-        "description": "Secondary finding",
-        "supporting_evidence": "Evidence description"
-      }
-    ],
-    "assumptions_checked": [
-      {
-        "assumption": "Normality",
-        "test_used": "Shapiro-Wilk",
-        "result": "violated|satisfied"
-      }
-    ],
     "implications": {
-      "theoretical": "Theoretical implications",
-      "practical": "Practical implications",
-      "future_work": "Recommended next steps"
+      "practical": ["Supports progression to murine in vivo testing"],
+      "theoretical": ["Confirms cell wall target vulnerability"],
+      "future_work": ["Perform pharmacokinetic profiling"]
     },
-    "confidence_in_findings": 0.85,
-    "limitations": ["Limitation 1"]
+    "limitations": ["In vitro BSL-3 assay format"]
   }
 
 tools:
@@ -71,18 +58,7 @@ env_required:
 statistical_tests:
   - t_test
   - anova
-  - chi_square
   - mann_whitney_u
-  - wilcoxon
-  - kruskal_wallis
-  - correlation
-  - regression
-
-effect_size_measures:
-  - cohens_d
-  - eta_squared
-  - cramers_v
-  - r_squared
 
 fallback:
   enabled: true

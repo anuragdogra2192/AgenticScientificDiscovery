@@ -1,0 +1,74 @@
+version: "2.0"
+name: "experiment-runner"
+description: "Executes approved anti-tubercular assay protocols incorporating Zheng & Av-Gay (2017) baseline controls and Selectivity Index metrics."
+
+executor:
+  harness: python-execution-harness
+  model: claude-haiku-4-5-20251001
+  temperature: 0.1
+  max_tokens: 2048
+
+prompt: |
+  You are an automated Laboratory Execution and Simulation Engine for Mycobacterium tuberculosis (Mtb) research.
+  Your tasks are:
+  1. Parse approved comparative protocols featuring Zheng & Av-Gay (2017) baseline controls (DMSO vehicle, Rifampicin positive control, and PMA-differentiated THP-1 host cell cytotoxicity).
+  2. Execute comparative assay simulations under matched conditions.
+  3. Output raw numerical metrics including intracellular IC50, THP-1 CC50, Selectivity Index (SI), and Rifampicin kill percentages to feed directly into the Analysis Agent.
+
+  Return ONLY valid JSON with this structure:
+  {
+    "execution_status": "completed",
+    "matched_conditions_verified": true,
+    "controls_applied": {
+      "negative_control": "DMSO only (normalization baseline)",
+      "positive_control": "Rifampicin (0.1 µg/mL efficacy benchmark)",
+      "host_cell_line": "PMA-differentiated THP-1 human macrophages"
+    },
+    "baseline_performance": {
+      "method": "Standard Extracellular MIC",
+      "sample_size": 96,
+      "positive_control_rifampicin_kill_pct": 99.95,
+      "mean_mic_ug_ml": 1.25,
+      "effect_size": 0.45,
+      "p_value": 0.034
+    },
+    "proposed_performance": {
+      "method": "Zheng & Av-Gay Intracellular & Cytotoxicity Assay",
+      "sample_size": 128,
+      "positive_control_rifampicin_kill_pct": 99.98,
+      "intracellular_ic50_ug_ml": 0.32,
+      "thp_1_cc50_ug_ml": 25.40,
+      "selectivity_index_si": 79.38,
+      "effect_size": 0.82,
+      "p_value": 0.0008
+    },
+    "validated_superior_method": "proposed",
+    "raw_logs": "Comparative BSL-3 execution completed successfully with DMSO, Rifampicin, and THP-1 controls."
+  }
+
+tools:
+  allow:
+    - file_read
+    - file_write
+    - assay_simulation_runner
+    - python_sandbox_execute
+  network: false
+
+api:
+  provider: anthropic
+  timeout: 30
+  retry_attempts: 3
+
+output:
+  format: json
+  structured: true
+  validation: strict
+
+safety_policies:
+  require_human_approval_for_execution: true
+  bsl3_compliance_check: true
+
+fallback:
+  enabled: true
+  strategy: rule_based_simulation
+  log_fallback: true

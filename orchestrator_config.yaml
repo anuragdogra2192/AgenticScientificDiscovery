@@ -1,8 +1,7 @@
-name: Agentic Scientific Discovery Orchestrator
-description: Master workflow that connects all specialist agents
-version: "1.0.0"
+name: "Mtb-Agentic-Scientific-Discovery-Orchestrator"
+description: "Master Omnigent workflow connecting 6 specialist agents for Mycobacterium tuberculosis drug discovery and BSL-3 assay validation."
+version: "2.0.0"
 
-# Orchestration settings
 orchestration:
   mode: sequential_with_feedback
   log_level: INFO
@@ -10,314 +9,64 @@ orchestration:
   save_intermediate_results: true
   result_directory: ./results/
 
-# Phase definitions and sequence
-phases:
+default_executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.3
+  max_tokens: 4096
 
+phases:
   phase_1_literature:
-    name: Literature Discovery
-    agent: LiteratureAgent
-    description: Search scientific databases and identify research gaps
+    name: "Literature Discovery (Literature Agent)"
+    agent: "LiteratureAgent"
+    description: "Search Europe PMC and PubChem for Mtb drug resistance mechanisms and cell wall targets (DprE1, InhA)."
     enabled: true
     timeout_seconds: 300
-
-    input_requirements:
-      - research_question: string
-      - limit: int (default 50)
-      - year_range: tuple (default 2020-2026)
-
-    output_requirements:
-      - papers: List[Paper]
-      - gaps: List[ResearchGap]
-      - literature_report: dict
-
-    quality_checks:
-      - min_papers_found: 5
-      - max_papers: 500
-      - gaps_identified: true
 
   phase_2_hypothesis:
-    name: Hypothesis Generation & Ranking
-    agent: HypothesisAgent
-    description: Generate and score testable hypotheses from gaps
+    name: "Hypothesis Generation (Insight Agent)"
+    agent: "HypothesisAgent"
+    description: "Propose testable anti-tubercular hypotheses addressing drug resistance gaps."
     enabled: true
     timeout_seconds: 300
-
-    dependencies:
-      - phase_1_literature
-
-    input_requirements:
-      - papers: List[Paper]
-      - gaps: List[ResearchGap]
-      - research_question: string
-
-    output_requirements:
-      - hypotheses: List[Hypothesis]
-      - top_hypothesis: Hypothesis
-      - ranking_rationale: dict
-
-    quality_checks:
-      - hypotheses_generated: true
-      - min_hypotheses: 3
-      - max_hypotheses: 20
-      - top_hypothesis_score: ">=0.60"
 
   phase_3_experiment:
-    name: Experiment Design
-    agent: ExperimentAgent
-    description: Design rigorous experimental protocol with resource estimation
+    name: "Experiment Design (Experiment Planner)"
+    agent: "ExperimentAgent"
+    description: "Design BSL-3 microplate Alamar Blue assays, sample sizes, and budget constraints."
     enabled: true
     timeout_seconds: 300
-
-    dependencies:
-      - phase_2_hypothesis
-
-    input_requirements:
-      - hypothesis: Hypothesis
-
-    output_requirements:
-      - experimental_design: ExperimentalDesign
-      - sample_size: int
-      - budget_estimate: float
-      - timeline_weeks: int
-      - success_probability: float
-
-    quality_checks:
-      - design_valid: true
-      - budget_reasonable: "<=100000"
-      - sample_size_adequate: ">=30"
-      - success_probability: ">=0.30"
-
     human_approval_required: true
-    approval_fields:
-      - experimental_design
-      - budget_estimate
-      - sample_size
-      - timeline_weeks
-      - success_probability
-      - risk_factors
 
   phase_4_analysis:
-    name: Result Analysis & Interpretation
-    agent: AnalysisAgent
-    description: Statistically analyze results and extract findings
+    name: "Result Analysis (Analysis Agent)"
+    agent: "AnalysisAgent"
+    description: "Statistically evaluate MIC reductions and intracellular macrophage survival rates."
     enabled: true
     timeout_seconds: 300
-
-    dependencies:
-      - phase_3_experiment
-
-    input_requirements:
-      - experimental_design: ExperimentalDesign
-      - hypothesis: Hypothesis
-      - results_data: dict
-
-    output_requirements:
-      - analysis_report: AnalysisReport
-      - hypothesis_confirmed: bool
-      - findings: List[Finding]
-      - implications: dict
-
-    quality_checks:
-      - analysis_complete: true
-      - findings_extracted: true
-      - hypothesis_interpreted: true
-      - assumptions_checked: true
 
   phase_5_report:
-    name: Research Report Generation
-    agent: ReportAgent
-    description: Generate publication-ready research paper
+    name: "Research Report Generation (Report Agent)"
+    agent: "ReportAgent"
+    description: "Generate publication-ready research paper with APA citations and BSL-3 protocols."
     enabled: true
     timeout_seconds: 300
 
-    dependencies:
-      - phase_1_literature
-      - phase_2_hypothesis
-      - phase_3_experiment
-      - phase_4_analysis
+  phase_6_knowledge_graph:
+    name: "Knowledge Graph Update (Knowledge Graph Agent)"
+    agent: "KnowledgeGraphAgent"
+    description: "Update evidence, Mtb targets, compounds, and directional relationship links in JSON-LD."
+    enabled: true
+    timeout_seconds: 300
 
-    input_requirements:
-      - hypothesis: Hypothesis
-      - literature_findings: List[dict]
-      - analysis_report: AnalysisReport
-      - experiment_design: ExperimentalDesign
-
-    output_requirements:
-      - research_paper: ResearchPaper
-      - paper_markdown: string
-      - paper_json: dict
-      - knowledge_graph: dict
-
-    quality_checks:
-      - paper_generated: true
-      - citations_included: true
-      - figures_planned: true
-      - knowledge_graph_created: true
-
-# Feedback loop configuration
 feedback_loop:
   enabled: true
-  description: Refine literature search based on analysis findings
-
+  max_iterations: 2
   trigger_conditions:
     - hypothesis_not_confirmed
     - low_confidence_findings
-    - significant_gaps_identified
 
-  feedback_sources:
-    - analysis_agent_findings
-    - knowledge_graph_insights
-
-  feedback_actions:
-    - refined_literature_search: true
-    - new_search_terms: true
-    - additional_papers: true
-    - gap_analysis_refinement: true
-
-  max_iterations: 3
-  iteration_limit_reason: Prevent infinite loops
-
-# Human approval & safety checkpoints
-approval_checkpoints:
-
-  after_experiment_design:
-    required: true
-    description: Review experiment protocol, budget, and risks before execution
-    fields:
-      - experimental_design
-      - budget_total
-      - sample_size
-      - timeline_weeks
-      - success_probability
-      - risk_factors
-      - mitigation_strategies
-
-    approval_role: "Research Lead"
-    timeout_hours: 24
-    escalation_on_reject: true
-
-  after_analysis:
-    required: false
-    description: Optional review of statistical findings
-    fields:
-      - hypothesis_confirmed
-      - effect_size
-      - p_value
-      - confidence_intervals
-      - major_findings
-
-    approval_role: "Statistical Reviewer"
-    auto_approve_if: "p_value < 0.05 AND effect_size >= 0.3"
-
-# State management
 state_management:
   persistence: true
   storage_format: json
   state_directory: ./state/
-
-  tracked_objects:
-    - research_question
-    - papers
-    - gaps
-    - hypotheses
-    - selected_hypothesis
-    - experimental_design
-    - human_approvals
-    - analysis_results
-    - research_paper
-    - knowledge_graph
-
-  checkpoint_frequency: after_each_phase
-  enable_resume: true
-
-# Logging and monitoring
-logging:
-  log_level: INFO
-  console_output: true
-  file_output: true
-  log_file: ./logs/orchestration.log
-
-  log_events:
-    - phase_start
-    - phase_complete
-    - quality_check_pass
-    - quality_check_fail
-    - human_approval_requested
-    - human_approval_received
-    - feedback_triggered
-    - error_occurred
-    - workflow_complete
-
-# Error handling
-error_handling:
-  strategy: graceful_degradation
-  retry_failed_phases: true
-  max_retries: 3
-
-  error_recovery:
-    phase_timeout: "Skip phase, log error"
-    quality_check_fail: "Request manual review"
-    api_error: "Retry with exponential backoff"
-    approval_timeout: "Escalate to admin"
-
-# Knowledge graph integration
-knowledge_graph:
-  enabled: true
-  auto_update: true
-
-  updates_from:
-    - all_phases
-    - human_approvals
-    - feedback_loop
-
-  export_formats:
-    - rdf_xml
-    - turtle
-    - json_ld
-
-  export_on_completion: true
-
-# Workflow configuration
-workflow:
-  auto_run: false
-  batch_mode: false
-  email_notifications: true
-
-  on_completion:
-    - save_paper
-    - export_knowledge_graph
-    - send_notification
-    - archive_results
-
-  on_failure:
-    - log_error
-    - send_alert
-    - preserve_state_for_recovery
-
-# Validation rules
-validation:
-
-  literature_phase:
-    min_papers: 5
-    max_papers: 500
-    gap_quality: true
-
-  hypothesis_phase:
-    min_hypotheses: 3
-    novelty_threshold: 0.4
-    feasibility_threshold: 0.5
-
-  experiment_phase:
-    sample_size_minimum: 30
-    budget_maximum: 100000
-    success_probability_minimum: 0.3
-
-  analysis_phase:
-    assumption_checks: required
-    effect_size_reported: required
-    confidence_intervals: required
-
-  report_phase:
-    sections_complete: required
-    citations_present: required
-    figures_specified: required

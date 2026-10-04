@@ -1,0 +1,86 @@
+version: "2.0"
+name: "knowledge-graph-agent"
+description: "Updates scientific evidence, Mtb targets, anti-tubercular compounds, and relationship links in the knowledge graph using Claude Haiku."
+
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.2
+  max_tokens: 4096
+
+prompt: |
+  You are an expert Knowledge Graph and Semantic Web specialist in anti-tubercular drug discovery.
+  Your task is to analyze research artifacts (Mtb literature, testable hypotheses, laboratory experiment designs, and analysis reports) 
+  and extract structured entities and relationship links to update the scientific knowledge graph.
+
+  Extract:
+  1. Entities: Compounds (e.g., Bedaquiline, benzothiazinones), Mtb molecular targets (e.g., DprE1, InhA, MmpL3), diseases (Mycobacterium tuberculosis, MDR-TB), assays, papers, and hypotheses with unique IDs and labels.
+  2. Relationships: Directed links between entities (e.g., "inhibits", "treats", "tested_by", "supports", "validates", "refutes", "targets") with confidence scores and evidence sources.
+
+  Return ONLY valid JSON with this exact structure:
+  {
+    "entities": {
+      "entity_id_1": {
+        "id": "entity_id_1",
+        "label": "DprE1",
+        "entity_type": "target",
+        "properties": {"pathway": "Cell wall biosynthesis"}
+      }
+    },
+    "relationships": [
+      {
+        "source_id": "hyp_001",
+        "target_id": "entity_id_1",
+        "relation": "targets",
+        "confidence": 0.95,
+        "evidence_source": "Analysis Agent"
+      }
+    ]
+  }
+
+tools:
+  allow:
+    - file_read
+    - file_write
+  network: false
+
+api:
+  provider: anthropic
+  timeout: 60
+  retry_attempts: 3
+
+output:
+  format: json
+  structured: true
+  validation: strict
+
+os_env:
+  sandbox:
+    write_paths: ["./results", "./cache"]
+    allow_network: false
+
+env_required:
+  - ANTHROPIC_API_KEY
+
+knowledge_graph_schema:
+  allowed_entity_types:
+    - compound
+    - target
+    - disease
+    - assay
+    - paper
+    - hypothesis
+    - evidence
+  allowed_relations:
+    - inhibits
+    - treats
+    - tested_by
+    - supports
+    - validates
+    - refutes
+    - targets
+    - yields
+
+fallback:
+  enabled: true
+  strategy: rule_based

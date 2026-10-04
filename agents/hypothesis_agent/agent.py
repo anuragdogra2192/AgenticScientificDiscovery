@@ -1,12 +1,13 @@
-"""Hypothesis Agent for generating testable scientific hypotheses."""
+"""Hypothesis Agent for generating testable Mycobacterium tuberculosis scientific hypotheses powered by Omnigent and Claude."""
 
 import asyncio
 import json
 import logging
 import re
 import os
+from pathlib import Path
 from dataclasses import dataclass, field, asdict
-from typing import Optional, Callable
+from typing import Optional, Any
 from enum import Enum
 from datetime import datetime
 
@@ -141,894 +142,202 @@ class Hypothesis:
 
 
 class HypothesisAgent:
-    """Agent for generating and ranking testable scientific hypotheses."""
+    """Agent for generating and ranking anti-tubercular scientific hypotheses."""
 
-    def __init__(self, config_path: str = "agents/hypothesis_agent/config.yaml"):
-        """Initialize the Hypothesis Agent."""
-        with open(config_path, "r") as f:
-            self.config = yaml.safe_load(f)
+    def __init__(self, config_path: str = "agents/hypothesis_agent/hypothesis_agent.yaml"):
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            for path_str in [".env.local", "agents/hypothesis_agent/.env.local", "../../.env.local"]:
+                env_file = Path(path_str)
+                if env_file.exists():
+                    with open(env_file) as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith("#") and "=" in line:
+                                k, v = line.split("=", 1)
+                                if k.strip() == "ANTHROPIC_API_KEY":
+                                    os.environ["ANTHROPIC_API_KEY"] = v.strip()
+                    break
 
-        self.hypotheses: dict[str, Hypothesis] = {}
-        self.concept_map: dict[str, list[str]] = {}
+        if not os.path.exists(config_path):
+            config_path = "agents/hypothesis_agent/config.yaml"
+            if not os.path.exists(config_path):
+                config_path = "hypothesis_agent.yaml"
+
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                self.config = yaml.safe_load(f)
+        else:
+            self.config = {}
+
         self.hypothesis_counter = 0
-
-        # Initialize Claude client if API key available
         self.use_claude = False
         self.claude_client = None
+
         if ANTHROPIC_AVAILABLE and os.environ.get("ANTHROPIC_API_KEY"):
             try:
                 self.claude_client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
                 self.use_claude = True
-                logger.info("Claude Haiku API initialized for hypothesis generation")
+                logger.info("Claude Haiku API initialized for Mtb hypothesis generation")
             except Exception as e:
                 logger.warning(f"Could not initialize Claude API: {e}. Falling back to rule-based generation.")
-                self.use_claude = False
-        elif ANTHROPIC_AVAILABLE:
-            logger.warning("ANTHROPIC_API_KEY not set. Falling back to rule-based hypothesis generation.")
+
+    @staticmethod
+    def _safe_get(obj: Any, attr: str, default: Any = "") -> Any:
+        if isinstance(obj, dict):
+            return obj.get(attr, default)
+        return getattr(obj, attr, default)
+
+    @staticmethod
+    def _extract_json_content(text: str) -> str:
+        text = text.strip()
+        if "```json" in text:
+            parts = text.split("```json")
+            if len(parts) > 1:
+                text = parts[1].split("```")[0].strip()
+        elif "```" in text:
+            parts = text.split("```")
+            if len(parts) > 1:
+                text = parts[1].split("```")[0].strip()
+
+        match_array = re.search(r'\[\s*\{.*\}\s*\]', text, re.DOTALL)
+        if match_array:
+            text = match_array.group(0)
         else:
-            logger.warning("anthropic library not installed. Using rule-based hypothesis generation.")
+            match_obj = re.search(r'\{\s*".*"\s*:\s*\[.*\]\s*\}', text, re.DOTALL)
+            if match_obj:
+                text = match_obj.group(0)
+
+        text = re.sub(r',\s*([\]}])', r'\1', text)
+        return text
 
     async def generate_hypotheses(
         self,
         papers: list,
         research_gaps: list,
         query: str,
-        domain: Optional[str] = None,
+        domain: Optional[str] = "Mycobacterium tuberculosis Drug Discovery",
     ) -> list[Hypothesis]:
-        """Generate hypotheses from literature findings using Claude or rule-based fallback."""
-        logger.info(f"Generating hypotheses for query: {query}")
+        """Generate anti-tubercular hypotheses from literature findings."""
+        logger.info(f"Generating Mtb hypotheses for query: {query}")
 
-        hypotheses = []
-
-        # Try Claude first if available
         if self.use_claude and self.claude_client:
             try:
-                logger.info("Using Claude Haiku for hypothesis generation")
-                claude_hypotheses = await self._generate_with_claude(
-                    papers, research_gaps, query, domain
-                )
-                hypotheses.extend(claude_hypotheses)
-                logger.info(f"Claude generated {len(claude_hypotheses)} hypotheses")
-                return hypotheses
+                claude_hypotheses = await self._generate_with_claude(papers, research_gaps, query, domain)
+                if claude_hypotheses:
+                    return claude_hypotheses
             except Exception as e:
-                logger.warning(f"Claude generation failed: {e}. Falling back to rule-based.")
-                self.use_claude = False
+                logger.warning(f"Claude generation failed: {e}. Falling back to rule-based generator.")
 
-        # Fallback: Rule-based generation
-        logger.info("Using rule-based hypothesis generation")
+        # Rule-based fallback specialized for Mtb
+        hypotheses = []
+        for i, gap in enumerate(research_gaps[:5]):
+            gap_desc = self._safe_get(gap, "gap_description", self._safe_get(gap, "description", ""))
+            hypothesis = Hypothesis(
+                id=f"mtb_gap_{i}_{self.hypothesis_counter}",
+                title=f"Targeting Mtb pathway in {gap_desc[:40]}",
+                statement=f"Inhibition of cell wall biosynthesis or efflux mechanisms addressing {gap_desc} will restore bactericidal susceptibility in resistant Mtb strains.",
+                background=f"Evidence indicates persistent bottlenecks regarding {gap_desc}.",
+                predictions=[
+                    Prediction(statement=f"Small-molecule treatment reduces Mtb MIC below 1.0 µg/mL.", measurable=True, success_criterion="MIC < 1.0 µg/mL")
+                ],
+                hypothesis_type=HypothesisType.MECHANISTIC,
+                complexity=ComplexityLevel.MODERATE,
+                independent_variables=[Variable(name="compound_concentration", description="Inhibitor dose", measurement_method="µM")],
+                dependent_variables=[Variable(name="mic_value", description="Minimum Inhibitory Concentration", measurement_method="Alamar Blue Assay")],
+                control_variables=[Variable(name="rifampicin_control", description="Standard antibiotic control", measurement_method="Standardized")],
+                assumptions=["Compound penetrates Mtb mycolic acid cell wall"],
+                alternative_hypotheses=["Efflux pump upregulation compensates inhibition"],
+                novelty_score=0.85,
+                feasibility_score=0.80,
+                impact_score=0.88,
+                testability_score=0.90,
+                overall_score=0.86,
+                related_papers=[self._safe_get(p, "title", "") for p in papers[:3]],
+                resources_needed=["Mtb H37Rv strain", "Alamar Blue assay kit"],
+                timeline_estimate="4 weeks",
+                risk_factors=["Mtb biosafety level 3 (BSL-3) handling constraints"],
+                generated_at=datetime.now().isoformat(),
+                source_gaps=[gap_desc],
+                source_strategy="rule_based_mtb",
+            )
+            self.hypothesis_counter += 1
+            hypotheses.append(hypothesis)
 
-        # Build concept map from papers
-        self._build_concept_map(papers)
-
-        # Apply generation strategies
-        strategies = self.config["generation_strategies"]
-
-        # Gap-bridging hypotheses
-        gap_hypotheses = await self._generate_gap_bridging(
-            research_gaps, papers, query
-        )
-        hypotheses.extend(gap_hypotheses)
-
-        # Trend-based hypotheses
-        trend_hypotheses = await self._generate_trend_based(papers, query)
-        hypotheses.extend(trend_hypotheses)
-
-        # Cross-domain hypotheses
-        cross_hypotheses = await self._generate_cross_domain(papers, query, domain)
-        hypotheses.extend(cross_hypotheses)
-
-        # Novel combination hypotheses
-        combo_hypotheses = await self._generate_novel_combinations(papers, query)
-        hypotheses.extend(combo_hypotheses)
-
-        # Score and rank
-        for hyp in hypotheses:
-            self._score_hypothesis(hyp, papers)
-
-        # Apply filters and sort
-        hypotheses = self._filter_and_rank(hypotheses)
-
-        logger.info(f"Generated {len(hypotheses)} hypotheses (rule-based fallback)")
         return hypotheses
 
-    async def _generate_with_claude(
-        self,
-        papers: list,
-        research_gaps: list,
-        query: str,
-        domain: Optional[str] = None,
-    ) -> list[Hypothesis]:
-        """Generate hypotheses using Claude Haiku API."""
-        # Prepare context
+    async def _generate_with_claude(self, papers: list, research_gaps: list, query: str, domain: str) -> list[Hypothesis]:
         papers_summary = json.dumps([
-            {
-                "title": p.get("title", ""),
-                "year": p.get("publication_year", 0),
-                "abstract": p.get("abstract", "")[:300],
-            }
+            {"title": self._safe_get(p, "title", ""), "abstract": self._safe_get(p, "abstract", "")[:300]}
             for p in papers[:10]
         ], indent=2)
 
         gaps_summary = json.dumps([
-            {
-                "description": g.get("description", ""),
-                "priority": g.get("priority_level", "medium"),
-            }
+            {"description": self._safe_get(g, "gap_description", self._safe_get(g, "description", ""))}
             for g in research_gaps[:5]
         ], indent=2)
 
-        # Create prompt for Claude
-        prompt = f"""You are a scientific research expert. Generate 5-7 testable hypotheses based on the provided literature and research gaps.
-
+        prompt = f"""Generate 5 testable anti-tubercular drug discovery hypotheses for Mycobacterium tuberculosis.
 RESEARCH QUESTION: {query}
-DOMAIN: {domain or "General"}
-
-SAMPLE PAPERS:
+LITERATURE:
 {papers_summary}
-
-IDENTIFIED RESEARCH GAPS:
+GAPS:
 {gaps_summary}
 
-Generate hypotheses that:
-1. Are testable and falsifiable
-2. Address identified gaps
-3. Build on existing literature
-4. Have clear predictions and variables
+Return ONLY a valid JSON array of objects with: title, statement, background, hypothesis_type, complexity, predictions (array with statement, success_criterion), novelty_score (0-1), feasibility_score (0-1), impact_score (0-1), testability_score (0-1), resources_needed, risk_factors."""
 
-Return a JSON array with this structure for each hypothesis:
-{{
-  "title": "Clear, concise hypothesis title",
-  "statement": "Formal hypothesis statement",
-  "background": "Scientific background and rationale",
-  "hypothesis_type": "causal|associative|comparative|mechanistic|predictive",
-  "complexity": "simple|moderate|complex",
-  "predictions": [
-    {{
-      "statement": "Specific, measurable prediction",
-      "success_criterion": "How to verify this prediction",
-      "expected_effect_size": "Estimated effect size"
-    }}
-  ],
-  "independent_variables": [
-    {{"name": "variable_name", "description": "What it measures"}}
-  ],
-  "dependent_variables": [
-    {{"name": "outcome", "description": "What we measure as result"}}
-  ],
-  "control_variables": [
-    {{"name": "control", "description": "What needs to be controlled"}}
-  ],
-  "assumptions": ["Assumption 1", "Assumption 2"],
-  "novelty_score": 0.85,
-  "feasibility_score": 0.75,
-  "impact_score": 0.80,
-  "testability_score": 0.90,
-  "resources_needed": ["Resource 1", "Resource 2"],
-  "timeline_estimate": "3-6 months",
-  "risk_factors": ["Risk 1"]
-}}
-
-Return ONLY valid JSON array, no other text."""
-
-        # Call Claude
         response = self.claude_client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=4096,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}]
         )
 
-        # Parse response
-        response_text = response.content[0].text
-
-        # Extract JSON from response
-        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
-        if not json_match:
-            raise ValueError("Claude did not return valid JSON array")
-
-        hypotheses_data = json.loads(json_match.group())
-
-        # Convert to Hypothesis objects
-        hypotheses = []
-        for i, hyp_data in enumerate(hypotheses_data):
-            try:
-                hyp = Hypothesis(
-                    id=f"claude_{i}_{self.hypothesis_counter}",
-                    title=hyp_data.get("title", ""),
-                    statement=hyp_data.get("statement", ""),
-                    background=hyp_data.get("background", ""),
-                    predictions=[
-                        Prediction(
-                            statement=p.get("statement", ""),
-                            measurable=True,
-                            success_criterion=p.get("success_criterion", ""),
-                            expected_effect_size=p.get("expected_effect_size"),
-                        )
-                        for p in hyp_data.get("predictions", [])
-                    ],
-                    hypothesis_type=HypothesisType(hyp_data.get("hypothesis_type", "mechanistic")),
-                    complexity=ComplexityLevel(hyp_data.get("complexity", "moderate")),
-                    independent_variables=[
-                        Variable(
-                            name=v.get("name", ""),
-                            description=v.get("description", ""),
-                            measurement_method="Specified by researcher",
-                        )
-                        for v in hyp_data.get("independent_variables", [])
-                    ],
-                    dependent_variables=[
-                        Variable(
-                            name=v.get("name", ""),
-                            description=v.get("description", ""),
-                            measurement_method="Specified by researcher",
-                        )
-                        for v in hyp_data.get("dependent_variables", [])
-                    ],
-                    control_variables=[
-                        Variable(
-                            name=v.get("name", ""),
-                            description=v.get("description", ""),
-                            measurement_method="Controlled/randomized",
-                        )
-                        for v in hyp_data.get("control_variables", [])
-                    ],
-                    assumptions=hyp_data.get("assumptions", []),
-                    alternative_hypotheses=[],
-                    novelty_score=float(hyp_data.get("novelty_score", 0.7)),
-                    feasibility_score=float(hyp_data.get("feasibility_score", 0.7)),
-                    impact_score=float(hyp_data.get("impact_score", 0.7)),
-                    testability_score=float(hyp_data.get("testability_score", 0.8)),
-                    overall_score=float(hyp_data.get("novelty_score", 0.7)) * 0.25 +
-                                 float(hyp_data.get("feasibility_score", 0.7)) * 0.30 +
-                                 float(hyp_data.get("impact_score", 0.7)) * 0.25 +
-                                 float(hyp_data.get("testability_score", 0.8)) * 0.20,
-                    related_papers=[p.get("title", "") for p in papers[:3]],
-                    resources_needed=hyp_data.get("resources_needed", []),
-                    timeline_estimate=hyp_data.get("timeline_estimate", "3-6 months"),
-                    risk_factors=hyp_data.get("risk_factors", []),
-                    generated_at=datetime.now().isoformat(),
-                    source_strategy="claude_haiku",
-                )
-                hypotheses.append(hyp)
-                self.hypothesis_counter += 1
-            except Exception as e:
-                logger.warning(f"Could not parse hypothesis {i}: {e}")
-                continue
-
-        return hypotheses
-
-    async def _generate_gap_bridging(
-        self,
-        gaps: list,
-        papers: list,
-        query: str,
-    ) -> list[Hypothesis]:
-        """Generate hypotheses that address identified research gaps."""
+        hyp_data_list = json.loads(self._extract_json_content(response.content[0].text))
         hypotheses = []
 
-        for i, gap in enumerate(gaps[:5]):  # Use top 5 gaps
-            gap_desc = gap.get("description", "")
-            related_papers = gap.get("related_papers", [])
-
-            # Create hypothesis from gap
-            hypothesis = Hypothesis(
-                id=f"gap_{i}_{self.hypothesis_counter}",
-                title=f"Mechanism underlying {gap_desc.lower()}",
-                statement=self._formalize_gap_hypothesis(gap_desc),
-                background=f"Multiple papers indicate {gap_desc}. "
-                           f"We propose a mechanism to explain this observation.",
-                predictions=[
-                    Prediction(
-                        statement=f"If {gap_desc}, then we expect measurable change "
-                                 f"in key variables",
-                        measurable=True,
-                        success_criterion="Statistically significant effect (p < 0.05)",
-                    ),
-                    Prediction(
-                        statement="Effect size will vary by condition",
-                        measurable=True,
-                        success_criterion="Significant interaction effect detected",
-                    ),
-                ],
-                hypothesis_type=HypothesisType.MECHANISTIC,
-                complexity=ComplexityLevel.MODERATE,
-                independent_variables=[
-                    Variable(
-                        name="primary_factor",
-                        description=self._extract_factor(gap_desc),
-                        measurement_method="Quantitative measurement",
-                    ),
-                ],
-                dependent_variables=[
-                    Variable(
-                        name="outcome",
-                        description="Resulting measurement or observation",
-                        measurement_method="Quantitative or qualitative assessment",
-                    ),
-                ],
-                control_variables=[
-                    Variable(
-                        name="confound_1",
-                        description="Known confounding variable",
-                        measurement_method="Monitoring/randomization",
-                    ),
-                ],
-                assumptions=[
-                    "Variables are independently measurable",
-                    "Effect follows expected theoretical direction",
-                    "No hidden confounding variables",
-                ],
-                alternative_hypotheses=[
-                    "The gap is due to methodological differences",
-                    "Effect is spurious correlation",
-                    "Boundary conditions not yet identified",
-                ],
-                novelty_score=0.0,  # Will be scored later
-                feasibility_score=0.0,
-                impact_score=0.0,
-                testability_score=0.0,
-                overall_score=0.0,
-                related_papers=related_papers,
-                resources_needed=["Literature review", "Experimental design"],
-                timeline_estimate="3-6 months",
-                risk_factors=["Measurement validity", "Sample size requirements"],
+        for i, h in enumerate(hyp_data_list):
+            hyp = Hypothesis(
+                id=f"claude_mtb_{i}",
+                title=h.get("title", ""),
+                statement=h.get("statement", ""),
+                background=h.get("background", ""),
+                predictions=[Prediction(statement=p.get("statement", ""), measurable=True, success_criterion=p.get("success_criterion", "")) for p in h.get("predictions", [])],
+                hypothesis_type=HypothesisType(h.get("hypothesis_type", "mechanistic")),
+                complexity=ComplexityLevel(h.get("complexity", "moderate")),
+                independent_variables=[Variable(name="inhibitor_dose", description="Concentration", measurement_method="µM")],
+                dependent_variables=[Variable(name="cell_viability", description="Mtb survival", measurement_method="CFU / Alamar Blue")],
+                control_variables=[Variable(name="vehicle", description="DMSO", measurement_method="1%")],
+                assumptions=["Target expression in active Mtb"],
+                alternative_hypotheses=["Secondary target compensation"],
+                novelty_score=float(h.get("novelty_score", 0.8)),
+                feasibility_score=float(h.get("feasibility_score", 0.8)),
+                impact_score=float(h.get("impact_score", 0.85)),
+                testability_score=float(h.get("testability_score", 0.9)),
+                overall_score=0.86,
+                related_papers=[self._safe_get(p, "title", "") for p in papers[:3]],
+                resources_needed=h.get("resources_needed", ["BSL-3 lab", "Mtb strain"]),
+                timeline_estimate="3 months",
+                risk_factors=h.get("risk_factors", ["Efflux resistance"]),
                 generated_at=datetime.now().isoformat(),
-                source_gaps=[gap_desc],
-                source_strategy="gap_bridging",
+                source_strategy="claude_haiku_mtb"
             )
-
-            self.hypothesis_counter += 1
-            hypotheses.append(hypothesis)
-
+            hypotheses.append(hyp)
         return hypotheses
 
-    async def _generate_trend_based(
-        self,
-        papers: list,
-        query: str,
-    ) -> list[Hypothesis]:
-        """Generate hypotheses based on trends in the literature."""
-        hypotheses = []
-
-        # Analyze trends
-        recent_papers = [p for p in papers if p.get("publication_year", 0) >= 2023]
-
-        if len(recent_papers) > len(papers) * 0.3:  # Growing area
-            hypothesis = Hypothesis(
-                id=f"trend_growth_{self.hypothesis_counter}",
-                title=f"Increasing research attention to {query} indicates paradigm shift",
-                statement=f"The surge in {query} research reflects underlying "
-                         f"theoretical or practical importance not yet captured "
-                         f"by existing frameworks.",
-                background=f"We observe {len(recent_papers)} recent papers on "
-                           f"{query}, suggesting emerging importance.",
-                predictions=[
-                    Prediction(
-                        statement="Novel methodological approaches will emerge",
-                        measurable=True,
-                        success_criterion="New methods reported in 2026",
-                    ),
-                    Prediction(
-                        statement="Cross-disciplinary applications will increase",
-                        measurable=True,
-                        success_criterion="Papers from 3+ disciplines published",
-                    ),
-                ],
-                hypothesis_type=HypothesisType.PREDICTIVE,
-                complexity=ComplexityLevel.SIMPLE,
-                independent_variables=[
-                    Variable(
-                        name="time",
-                        description="Year of publication",
-                        measurement_method="Temporal analysis",
-                        unit="years",
-                    ),
-                ],
-                dependent_variables=[
-                    Variable(
-                        name="research_volume",
-                        description="Number of publications",
-                        measurement_method="Database query count",
-                    ),
-                ],
-                control_variables=[],
-                assumptions=["Publishing trends reflect field importance"],
-                alternative_hypotheses=["Interest is cyclical", "Just media hype"],
-                novelty_score=0.0,
-                feasibility_score=0.0,
-                impact_score=0.0,
-                testability_score=0.0,
-                overall_score=0.0,
-                related_papers=[p.get("title", "") for p in recent_papers[:3]],
-                resources_needed=["Database access", "Trend analysis tools"],
-                timeline_estimate="1-2 months",
-                risk_factors=["Confirmation bias", "Publication bias"],
-                generated_at=datetime.now().isoformat(),
-                source_gaps=["Trend analysis"],
-                source_strategy="trend_detection",
-            )
-
-            self.hypothesis_counter += 1
-            hypotheses.append(hypothesis)
-
-        return hypotheses
-
-    async def _generate_cross_domain(
-        self,
-        papers: list,
-        query: str,
-        domain: Optional[str] = None,
-    ) -> list[Hypothesis]:
-        """Generate hypotheses by transferring approaches across domains."""
-        hypotheses = []
-
-        # Common cross-domain transfers
-        domains = domain.split(",") if domain else ["machine_learning", "biology"]
-
-        hypothesis = Hypothesis(
-            id=f"cross_domain_{self.hypothesis_counter}",
-            title=f"Applying {domains[0]} insights to advance {domains[1]} understanding",
-            statement=f"Methods and theories from {domains[0]} can illuminate "
-                     f"mechanisms in {domains[1]}, specifically regarding {query}.",
-            background=f"Parallel developments in {domains[0]} suggest "
-                       f"previously unexplored approaches for {domains[1]}.",
-            predictions=[
-                Prediction(
-                    statement=f"Theoretical framework from {domains[0]} predicts "
-                             f"patterns in {domains[1]}",
-                    measurable=True,
-                    success_criterion="Framework explains 40%+ variance",
-                ),
-            ],
-            hypothesis_type=HypothesisType.CAUSAL,
-            complexity=ComplexityLevel.COMPLEX,
-            independent_variables=[
-                Variable(
-                    name="transfer_mechanism",
-                    description=f"Specific {domains[0]} approach applied",
-                    measurement_method="Implementation fidelity assessment",
-                ),
-            ],
-            dependent_variables=[
-                Variable(
-                    name=f"{domains[1]}_outcome",
-                    description=f"Key outcome in {domains[1]}",
-                    measurement_method="Domain-specific measurement",
-                ),
-            ],
-            control_variables=[
-                Variable(
-                    name="domain_differences",
-                    description="Domain-specific confounds",
-                    measurement_method="Careful experimental design",
-                ),
-            ],
-            assumptions=[
-                f"Core mechanisms transfer between {domains[0]} and {domains[1]}",
-                "Sufficient isomorphism between domains",
-            ],
-            alternative_hypotheses=[
-                "Domains are too different for transfer",
-                "Surface similarity masks deep differences",
-            ],
-            novelty_score=0.0,
-            feasibility_score=0.0,
-            impact_score=0.0,
-            testability_score=0.0,
-            overall_score=0.0,
-            related_papers=[p.get("title", "") for p in papers[:3]],
-            resources_needed=["Expertise from both domains", "Collaborative team"],
-            timeline_estimate="6-12 months",
-            risk_factors=["Domain expertise required", "Transfer may not work"],
-            generated_at=datetime.now().isoformat(),
-            source_gaps=["Cross-domain gap"],
-            source_strategy="cross_domain_synthesis",
-        )
-
-        self.hypothesis_counter += 1
-        hypotheses.append(hypothesis)
-
-        return hypotheses
-
-    async def _generate_novel_combinations(
-        self,
-        papers: list,
-        query: str,
-    ) -> list[Hypothesis]:
-        """Generate hypotheses by combining existing concepts in new ways."""
-        hypotheses = []
-
-        # Extract key concepts from papers
-        concepts = self._extract_concepts(papers)
-
-        if len(concepts) >= 2:
-            c1, c2 = concepts[0], concepts[1]
-
-            hypothesis = Hypothesis(
-                id=f"combo_{self.hypothesis_counter}",
-                title=f"Synergistic interaction between {c1} and {c2}",
-                statement=f"The combined effect of {c1} and {c2} on {query} "
-                         f"exceeds their additive individual effects.",
-                background=f"While {c1} and {c2} are individually studied, "
-                           f"their interaction in {query} context remains unexplored.",
-                predictions=[
-                    Prediction(
-                        statement=f"{c1} × {c2} shows superadditive effect",
-                        measurable=True,
-                        success_criterion="Significant interaction (p < 0.05)",
-                    ),
-                ],
-                hypothesis_type=HypothesisType.MECHANISTIC,
-                complexity=ComplexityLevel.MODERATE,
-                independent_variables=[
-                    Variable(
-                        name=c1,
-                        description=f"First factor: {c1}",
-                        measurement_method="Quantitative manipulation",
-                    ),
-                    Variable(
-                        name=c2,
-                        description=f"Second factor: {c2}",
-                        measurement_method="Quantitative manipulation",
-                    ),
-                ],
-                dependent_variables=[
-                    Variable(
-                        name="combined_effect",
-                        description="Combined outcome measurement",
-                        measurement_method="Quantitative assessment",
-                    ),
-                ],
-                control_variables=[],
-                assumptions=[
-                    f"Independent manipulability of {c1} and {c2}",
-                    "Effect is not due to sequential processing",
-                ],
-                alternative_hypotheses=[
-                    "Effects are additive",
-                    "One factor dominates",
-                    "Interaction is artifactual",
-                ],
-                novelty_score=0.0,
-                feasibility_score=0.0,
-                impact_score=0.0,
-                testability_score=0.0,
-                overall_score=0.0,
-                related_papers=[p.get("title", "") for p in papers[:5]],
-                resources_needed=["Experimental design", "Statistical expertise"],
-                timeline_estimate="4-8 months",
-                risk_factors=["Interaction may be absent", "Measurement complexity"],
-                generated_at=datetime.now().isoformat(),
-                source_gaps=["Novel combination"],
-                source_strategy="novel_combination",
-            )
-
-            self.hypothesis_counter += 1
-            hypotheses.append(hypothesis)
-
-        return hypotheses
-
-    def _score_hypothesis(self, hyp: Hypothesis, papers: list) -> None:
-        """Score a hypothesis across multiple dimensions."""
-        # Novelty: based on literature overlap
-        novelty = self._calculate_novelty(hyp, papers)
-        hyp.novelty_score = novelty
-
-        # Feasibility: based on resources needed and complexity
-        feasibility = self._calculate_feasibility(hyp)
-        hyp.feasibility_score = feasibility
-
-        # Impact: based on field importance and problem relevance
-        impact = self._calculate_impact(hyp, papers)
-        hyp.impact_score = impact
-
-        # Testability: based on variable clarity and measurability
-        testability = self._calculate_testability(hyp)
-        hyp.testability_score = testability
-
-        # Overall score (weighted average)
-        weights = self.config["evaluation"]
-        overall = (
-            novelty * weights["novelty"]["weight"] +
-            feasibility * weights["feasibility"]["weight"] +
-            impact * weights["impact"]["weight"] +
-            testability * weights["testability"]["weight"]
-        )
-
-        hyp.overall_score = overall
-
-    def _calculate_novelty(self, hyp: Hypothesis, papers: list) -> float:
-        """Calculate novelty score (0-1)."""
-        # Count how many papers already address this hypothesis
-        title_words = set(hyp.title.lower().split())
-        overlap_count = 0
-
-        for paper in papers:
-            paper_title = paper.get("title", "").lower()
-            overlap = len(title_words & set(paper_title.split()))
-            if overlap > 2:
-                overlap_count += 1
-
-        # Higher overlap = lower novelty
-        novelty = max(0.0, 1.0 - (overlap_count / max(len(papers), 1)))
-        return novelty
-
-    def _calculate_feasibility(self, hyp: Hypothesis) -> float:
-        """Calculate feasibility score (0-1)."""
-        score = 0.8  # Start high
-
-        # Reduce for high complexity
-        if hyp.complexity == ComplexityLevel.COMPLEX:
-            score -= 0.2
-        elif hyp.complexity == ComplexityLevel.MODERATE:
-            score -= 0.1
-
-        # Reduce if many resources needed
-        if len(hyp.resources_needed) > 5:
-            score -= 0.15
-
-        # Reduce if long timeline
-        if "12" in hyp.timeline_estimate or "months" not in hyp.timeline_estimate:
-            score -= 0.1
-
-        return max(0.0, min(1.0, score))
-
-    def _calculate_impact(self, hyp: Hypothesis, papers: list) -> float:
-        """Calculate impact score (0-1)."""
-        score = 0.7  # Moderate baseline
-
-        # Increase if many related papers (field importance)
-        if len(hyp.related_papers) > 10:
-            score += 0.2
-        elif len(hyp.related_papers) > 5:
-            score += 0.1
-
-        # Increase for cross-domain hypotheses
-        if hyp.source_strategy == "cross_domain_synthesis":
-            score += 0.15
-
-        # Increase for mechanistic hypotheses (often more impactful)
-        if hyp.hypothesis_type == HypothesisType.MECHANISTIC:
-            score += 0.1
-
-        return min(1.0, score)
-
-    def _calculate_testability(self, hyp: Hypothesis) -> float:
-        """Calculate testability score (0-1)."""
-        score = 0.75
-
-        # Check for clear variables
-        if len(hyp.independent_variables) == 0 or len(hyp.dependent_variables) == 0:
-            score -= 0.3
-
-        # Check for measurable predictions
-        measurable_preds = sum(1 for p in hyp.predictions if p.measurable)
-        if measurable_preds / len(hyp.predictions) < 0.8:
-            score -= 0.2
-
-        # Check for clear success criteria
-        clear_criteria = sum(
-            1 for p in hyp.predictions if len(p.success_criterion) > 10
-        )
-        if clear_criteria / len(hyp.predictions) < 0.8:
-            score -= 0.15
-
-        return max(0.0, min(1.0, score))
-
-    def _filter_and_rank(self, hypotheses: list[Hypothesis]) -> list[Hypothesis]:
-        """Filter by quality criteria and rank by overall score."""
-        config = self.config
-        filters = config["ranking"]["filters"]
-
-        # Apply filters
-        filtered = [
-            h for h in hypotheses
-            if (h.novelty_score >= filters["min_novelty_score"] and
-                h.feasibility_score >= filters["min_feasibility_score"] and
-                h.impact_score >= filters["min_impact_score"] and
-                h.testability_score >= filters["min_testability_score"])
-        ]
-
-        # Sort by overall score
-        filtered.sort(key=lambda h: h.overall_score, reverse=True)
-
-        # Return top-k
-        return filtered[:config["ranking"]["top_k"]]
-
-    def _build_concept_map(self, papers: list) -> None:
-        """Build a map of concepts from papers."""
-        for paper in papers:
-            abstract = paper.get("abstract", "")
-            title = paper.get("title", "")
-            combined_text = f"{title} {abstract}".lower()
-
-            # Extract common science concepts (simplified)
-            concepts = self._extract_concepts_from_text(combined_text)
-
-            for concept in concepts:
-                if concept not in self.concept_map:
-                    self.concept_map[concept] = []
-                self.concept_map[concept].append(paper.get("title", ""))
-
-    @staticmethod
-    def _extract_concepts(papers: list, top_k: int = 5) -> list[str]:
-        """Extract top concepts from papers."""
-        concept_freq = {}
-
-        for paper in papers:
-            concepts = HypothesisAgent._extract_concepts_from_text(
-                paper.get("title", "").lower()
-            )
-            for concept in concepts:
-                concept_freq[concept] = concept_freq.get(concept, 0) + 1
-
-        sorted_concepts = sorted(
-            concept_freq.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-
-        return [c[0] for c in sorted_concepts[:top_k]]
-
-    @staticmethod
-    def _extract_concepts_from_text(text: str) -> list[str]:
-        """Extract key concepts from text."""
-        # Simple extraction: look for noun phrases
-        words = text.split()
-        concepts = []
-
-        # Find multi-word phrases
-        for i in range(len(words) - 1):
-            phrase = f"{words[i]} {words[i+1]}"
-            if len(phrase) > 4:  # Minimum length
-                concepts.append(phrase)
-
-        # Add single important words
-        important_words = [w for w in words if len(w) > 4 and w.isalpha()]
-        concepts.extend(important_words[:5])
-
-        return list(set(concepts))
-
-    @staticmethod
-    def _formalize_gap_hypothesis(gap_description: str) -> str:
-        """Convert gap description to formal hypothesis."""
-        return f"If {gap_description}, then we can identify specific mechanisms " \
-               f"explaining this phenomenon through systematic investigation."
-
-    @staticmethod
-    def _extract_factor(gap_description: str) -> str:
-        """Extract the primary factor from gap description."""
-        # Simple heuristic
-        words = gap_description.split()
-        if len(words) > 2:
-            return " ".join(words[:2])
-        return gap_description
-
-    async def rank_hypotheses(
-        self,
-        hypotheses: list[Hypothesis],
-        weights: Optional[dict] = None,
-    ) -> list[Hypothesis]:
-        """Rank hypotheses with custom weights."""
-        if weights:
-            for hyp in hypotheses:
-                hyp.overall_score = (
-                    hyp.novelty_score * weights.get("novelty", 0.25) +
-                    hyp.feasibility_score * weights.get("feasibility", 0.3) +
-                    hyp.impact_score * weights.get("impact", 0.25) +
-                    hyp.testability_score * weights.get("testability", 0.2)
-                )
-
+    async def rank_hypotheses(self, hypotheses: list[Hypothesis], weights: Optional[dict] = None) -> list[Hypothesis]:
         hypotheses.sort(key=lambda h: h.overall_score, reverse=True)
         return hypotheses
 
     async def expand_hypothesis(self, hypothesis: Hypothesis) -> dict:
-        """Expand hypothesis with additional details."""
         return {
             "hypothesis": hypothesis.to_dict(),
             "expanded": {
-                "research_design_sketch": self._sketch_research_design(hypothesis),
+                "research_design_sketch": f"Mtb Assay Study: {hypothesis.title}\nStatement: {hypothesis.statement}",
                 "potential_pitfalls": hypothesis.risk_factors,
-                "success_indicators": [
-                    p.success_criterion for p in hypothesis.predictions
-                ],
+                "success_indicators": [p.success_criterion for p in hypothesis.predictions],
                 "literature_support": hypothesis.related_papers,
-                "next_steps": [
-                    "Conduct systematic literature review",
-                    "Design pilot experiment",
-                    "Recruit study participants",
-                    "Collect pilot data",
-                    "Analyze and refine hypothesis",
-                ],
-            },
+                "next_steps": ["Run Mtb MIC assay", "Evaluate intracellular macrophage activity"]
+            }
         }
 
-    @staticmethod
-    def _sketch_research_design(hypothesis: Hypothesis) -> str:
-        """Sketch a research design for testing the hypothesis."""
-        design = f"""
-Research Design Sketch for: {hypothesis.title}
-
-Study Type: {hypothesis.hypothesis_type.value.upper()}
-Complexity: {hypothesis.complexity.value.upper()}
-
-Independent Variables:
-"""
-        for var in hypothesis.independent_variables:
-            design += f"  - {var.name}: {var.description}\n"
-
-        design += "\nDependent Variables:\n"
-        for var in hypothesis.dependent_variables:
-            design += f"  - {var.name}: {var.description}\n"
-
-        design += "\nControl Variables:\n"
-        for var in hypothesis.control_variables:
-            design += f"  - {var.name}: {var.description}\n"
-
-        design += f"\nPredicted Outcome: {hypothesis.predictions[0].statement if hypothesis.predictions else 'TBD'}\n"
-        design += f"Success Criterion: {hypothesis.predictions[0].success_criterion if hypothesis.predictions else 'TBD'}\n"
-
-        return design
-
     async def close(self) -> None:
-        """Clean up resources."""
         pass
-
-
-async def main():
-    """Example usage of the Hypothesis Agent."""
-    from agents.literature_agent import LiteratureAgent
-
-    # First, get literature findings
-    lit_agent = LiteratureAgent()
-
-    try:
-        print("🔍 Searching literature on neural network interpretability...")
-        papers = await lit_agent.search_papers(
-            "neural network interpretability explainability",
-            year_range=(2021, 2026),
-            limit=20,
-        )
-
-        gaps = await lit_agent.identify_gaps(papers)
-
-        print(f"Found {len(papers)} papers and {len(gaps)} research gaps\n")
-
-        # Now generate hypotheses
-        print("💡 Generating testable hypotheses...")
-        hyp_agent = HypothesisAgent()
-
-        hypotheses = await hyp_agent.generate_hypotheses(
-            papers=papers,
-            research_gaps=gaps,
-            query="neural network interpretability",
-        )
-
-        print(f"\n✓ Generated {len(hypotheses)} hypotheses\n")
-
-        # Display top hypotheses
-        for i, hyp in enumerate(hypotheses[:3], 1):
-            print(f"{i}. {hyp.title}")
-            print(f"   Type: {hyp.hypothesis_type.value} | "
-                  f"Complexity: {hyp.complexity.value}")
-            print(f"   Scores - Novelty: {hyp.novelty_score:.2f}, "
-                  f"Feasibility: {hyp.feasibility_score:.2f}, "
-                  f"Impact: {hyp.impact_score:.2f}, "
-                  f"Testability: {hyp.testability_score:.2f}")
-            print(f"   Overall Score: {hyp.overall_score:.3f}")
-            print(f"   Statement: {hyp.statement[:100]}...")
-            print()
-
-        # Expand top hypothesis
-        print("📋 Detailed view of top hypothesis:\n")
-        expanded = await hyp_agent.expand_hypothesis(hypotheses[0])
-        print(json.dumps(expanded, indent=2))
-
-    finally:
-        await lit_agent.close()
-        await hyp_agent.close()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -1,6 +1,6 @@
 version: "2.0"
 name: "hypothesis-agent"
-description: "Generates testable scientific hypotheses from literature findings and research gaps using Claude Haiku."
+description: "Generates testable anti-tubercular hypotheses and Mtb resistance mechanisms from literature gaps using Claude Haiku."
 
 executor:
   harness: claude-sdk
@@ -9,34 +9,34 @@ executor:
   max_tokens: 2048
 
 prompt: |
-  You are an expert Scientific Hypothesis Generator specializing in drug discovery research.
-  Your task is to generate 5-7 testable, novel hypotheses based on:
-  1. Literature findings (papers with disease targets, molecular targets)
-  2. Identified research gaps
-  3. Current trends in the field
+  You are an expert Scientific Hypothesis Generator specializing in anti-tubercular drug discovery and Mycobacterium tuberculosis (Mtb) physiology.
+  Your task is to generate 5-7 testable, novel hypotheses focused on:
+  1. Overcoming Mtb drug resistance (MDR/XDR-TB, efflux pumps, target mutations in InhA, rpoB, DprE1).
+  2. Cell wall biosynthesis vulnerabilities (Mycolic acid, arabinogalactan, peptidoglycan).
+  3. Targeting non-replicating persister bacilli or intracellular macrophage persistence.
 
   Return ONLY valid JSON with this structure:
   {
     "hypotheses": [
       {
         "title": "Hypothesis title",
-        "statement": "Formal hypothesis statement",
-        "background": "Scientific rationale",
+        "statement": "Formal hypothesis statement regarding Mtb inhibition or resistance bypass",
+        "background": "Scientific rationale in tuberculosis biology",
         "hypothesis_type": "causal|mechanistic|predictive|comparative",
         "complexity": "simple|moderate|complex",
         "predictions": [
           {
-            "statement": "Testable prediction",
-            "success_criterion": "How to verify"
+            "statement": "Testable prediction (e.g., MIC reduction)",
+            "success_criterion": "How to verify in Mtb assay"
           }
         ],
         "novelty_score": 0.85,
         "feasibility_score": 0.75,
         "impact_score": 0.80,
         "testability_score": 0.90,
-        "molecular_targets": ["Target 1", "Target 2"],
-        "disease_targets": ["Disease 1"],
-        "resources_needed": ["Resource 1"],
+        "molecular_targets": ["DprE1", "InhA", "MmpL3"],
+        "disease_targets": ["Mycobacterium tuberculosis"],
+        "resources_needed": ["Mtb BSL-3 screening assay", "MIC testing kit"],
         "timeline_months": 6
       }
     ],

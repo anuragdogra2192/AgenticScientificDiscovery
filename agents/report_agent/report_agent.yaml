@@ -1,32 +1,29 @@
 version: "2.0"
 name: "report-agent"
-description: "Generates publication-ready research papers using Claude Haiku."
+description: "Generates publication-ready research papers for Mycobacterium tuberculosis drug discovery using Claude Haiku."
 
 executor:
   harness: claude-sdk
   model: claude-haiku-4-5-20251001
   temperature: 0.3
-  max_tokens: 4096
+  max_tokens: 8192
 
 prompt: |
-  You are an expert Scientific Writer specializing in research paper composition.
+  You are an expert Scientific Writer specializing in anti-tubercular drug discovery research paper composition.
   Your task is to generate a comprehensive, publication-ready research paper based on:
-  1. Hypothesis and background
-  2. Literature findings
-  3. Experimental design
-  4. Analysis results
+  1. Hypothesis and background (targeting Mtb DprE1, InhA, or MDR-TB mechanisms)
+  2. Literature findings (Europe PMC / PubChem)
+  3. Experimental design (BSL-3 microplate assays, MIC testing)
+  4. Analysis results (effect sizes, p-values, target inhibition)
 
-  The paper should include:
+  The paper must include:
   - Abstract (250 words max)
-  - Introduction (background, gap, hypothesis)
-  - Methods (design, measures, procedures)
-  - Results (findings, effect sizes, statistics)
-  - Discussion (interpretation, implications, limitations)
-  - Conclusion (key takeaways)
+  - Introduction (background, resistance gap, hypothesis)
+  - Methods (BSL-3 study design, Alamar Blue assays, measures)
+  - Results (MIC reduction findings, statistical details)
+  - Discussion (pharmacological implications, intracellular macrophage penetration, limitations)
+  - Conclusion (key takeaways for TB therapeutics)
   - References (APA format)
-
-  Use academic tone, proper scientific terminology, and clear structure.
-  Include figures and tables as specified in the design.
 
 tools:
   allow:
@@ -62,80 +59,11 @@ paper_structure:
     - conclusion
     - references
 
-  abstract:
-    max_words: 250
-    required_elements:
-      - background
-      - objective
-      - methods
-      - results
-      - conclusions
-
-  introduction:
-    min_words: 800
-    max_words: 1500
-    required_elements:
-      - background
-      - literature_review
-      - research_gap
-      - hypothesis
-      - significance
-
-  methods:
-    min_words: 1000
-    max_words: 2000
-    required_elements:
-      - study_design
-      - participants
-      - measures
-      - procedures
-      - analysis
-
-  results:
-    min_words: 1000
-    max_words: 1500
-    required_elements:
-      - descriptive_stats
-      - primary_findings
-      - secondary_findings
-      - statistical_details
-
-  discussion:
-    min_words: 1500
-    max_words: 2500
-    required_elements:
-      - summary
-      - interpretation
-      - theoretical_implications
-      - practical_implications
-      - limitations
-      - future_directions
-
 citation_styles:
   - apa
   - chicago
   - harvard
   - mla
-
-figure_types:
-  - scatter_plot
-  - bar_chart
-  - line_graph
-  - flow_diagram
-  - structural_formula
-
-table_types:
-  - descriptive_statistics
-  - results_summary
-  - correlation_matrix
-  - model_comparison
-
-knowledge_graph:
-  enabled: true
-  export_formats:
-    - rdf_xml
-    - turtle
-    - json_ld
 
 fallback:
   enabled: true

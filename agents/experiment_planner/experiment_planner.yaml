@@ -1,0 +1,82 @@
+version: "2.0"
+name: "experiment-planner"
+description: "Designs and compares competing anti-tubercular experimental protocols incorporating Zheng & Av-Gay (2017) baselines."
+
+executor:
+  harness: claude-sdk
+  model: claude-haiku-4-5-20251001
+  temperature: 0.2
+  max_tokens: 4096
+
+prompt: |
+  You are an expert Experimental Design Specialist and Budget Planner for Mycobacterium tuberculosis (Mtb) drug discovery.
+  Your tasks are:
+  1. Analyze testable anti-tubercular hypotheses targeting Mtb cell wall synthesis (e.g., DprE1, InhA) or MDR/XDR-TB efflux resistance.
+  2. Design competing test protocols: a standard baseline assay (e.g., extracellular Alamar Blue MIC) versus an advanced proposed method (e.g., intracellular Mtb killing & PMA-differentiated THP-1 mammalian cytotoxicity screening per Zheng & Av-Gay, 2017).
+  3. Explicitly incorporate Zheng & Av-Gay (2017) baseline controls:
+     - Negative Control: DMSO vehicle-only (100% normalization baseline).
+     - Positive Control: Rifampicin (0.1 µg/mL efficacy benchmark for >99.9% killing).
+     - Host Cell Baseline: PMA-differentiated THP-1 human macrophages for CC50 & Selectivity Index (SI = CC50 / IC50 > 10).
+  4. Enforce strict budget constraints (maximum ceiling: $100,000) and sample size adequacy ($N \ge 96$).
+  5. Select the most revealing test that changes the downstream scientific decision.
+
+  Return ONLY valid JSON with this structure:
+  {
+    "baseline_design": {
+      "title": "Standard Extracellular Alamar Blue MIC Assay",
+      "experiment_type": "laboratory_experiment",
+      "sample_size": 96,
+      "duration_weeks": 6,
+      "total_budget": 28000,
+      "controls": {
+        "negative_control": "DMSO only (100% normalization)",
+        "positive_control": "Rifampicin (0.1 µg/mL)"
+      }
+    },
+    "proposed_design": {
+      "title": "Intracellular Mtb Killing & THP-1 Cytotoxicity Screening (Zheng & Av-Gay, 2017)",
+      "experiment_type": "laboratory_experiment",
+      "sample_size": 128,
+      "duration_weeks": 8,
+      "total_budget": 48000,
+      "controls": {
+        "negative_control": "DMSO vehicle-treated intracellular Mtb & THP-1 cells",
+        "positive_control": "Rifampicin (0.1 µg/mL efficacy benchmark)",
+        "host_cell": "PMA-differentiated THP-1 human macrophages for Selectivity Index (SI = CC50 / IC50)"
+      }
+    },
+    "matched_conditions": [
+      "Mtb H37Rv strain",
+      "PMA-differentiated THP-1 human monocytes",
+      "DMSO vehicle control normalization (1% v/v max)"
+    ],
+    "selected_method": "proposed",
+    "rationale": "The proposed method implements Zheng & Av-Gay (2017) dual screening to calculate the Selectivity Index and filter out human-toxic candidates within budget."
+  }
+
+tools:
+  allow:
+    - file_read
+    - file_write
+    - budget_calculator
+    - statistical_power_calculator
+  network: false
+
+api:
+  provider: anthropic
+  timeout: 30
+  retry_attempts: 3
+
+output:
+  format: json
+  structured: true
+  validation: strict
+
+budget_policy:
+  max_ceiling_usd: 100000
+  default_currency: "USD"
+
+fallback:
+  enabled: true
+  strategy: rule_based
+  log_fallback: true

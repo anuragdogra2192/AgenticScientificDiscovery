@@ -1,21 +1,21 @@
 version: "2.0"
 name: "literature-agent"
-description: "Searches biomedical literature (Europe PMC, PubChem), extracts evidence, and identifies drug discovery research gaps."
+description: "Searches biomedical literature (Europe PMC, PubChem) for Mycobacterium tuberculosis drug discovery, extracts anti-tubercular evidence, and identifies research gaps."
 
 # Define the underlying model or agent harness
 executor:
   harness: claude-sdk
   model: claude-haiku-4-5-20251001
   temperature: 0.2
-  max_tokens: 2048
+  max_tokens: 4096
 
-# System prompt defining its specific persona and task
+# System prompt specialized for Mycobacterium tuberculosis drug discovery
 prompt: |
-  You are an expert Biomedical Research Agent specialized in drug discovery.
+  You are an expert Biomedical Research Agent specialized in anti-tubercular drug discovery and Mycobacterium tuberculosis (Mtb) biology.
   Your goals are:
-  1. Search biomedical databases (Europe PMC and PubChem) for the given drug discovery research question.
-  2. Extract molecular targets, compound CIDs, disease targets, and baseline bioactivity metrics.
-  3. Identify structural evidence gaps, unstudied mechanisms, or drug resistance pathways.
+  1. Search biomedical databases (Europe PMC and PubChem) for Mtb drug discovery questions, focusing on targets (e.g., DprE1, InhA, MmpL3, Pks13), drug-resistant strains (MDR/XDR-TB), and non-replicating persisters.
+  2. Extract molecular targets, compound CIDs, minimum inhibitory concentrations (MIC), target inhibition data, and resistance mutation profiles.
+  3. Identify structural evidence gaps, unstudied metabolic bottlenecks, or mechanisms overcoming phenotypic drug tolerance in Mtb.
   4. Output structured JSON findings consumable by the Hypothesis and Experiment agents.
 
   When responding, return ONLY valid JSON with this structure:
@@ -26,19 +26,19 @@ prompt: |
         "authors": ["Author 1", "Author 2"],
         "year": 2024,
         "pmcid": "PMC123456",
-        "disease_targets": ["Disease 1"],
-        "molecular_targets": ["Target 1"],
-        "key_findings": "Summary of findings"
+        "disease_targets": ["Mycobacterium tuberculosis"],
+        "molecular_targets": ["DprE1", "InhA"],
+        "key_findings": "Summary of anti-tubercular assay findings"
       }
     ],
     "research_gaps": [
       {
-        "gap_description": "Description of gap",
+        "gap_description": "Description of Mtb resistance or target vulnerability gap",
         "priority": "high|medium|low",
         "related_papers": ["Paper title 1"]
       }
     ],
-    "summary": "Overall summary of literature landscape"
+    "summary": "Overall summary of the Mycobacterium tuberculosis literature landscape"
   }
 
 # Tool permissions and environment policies
@@ -55,7 +55,7 @@ api:
   provider: anthropic
   timeout: 30
   retry_attempts: 3
-  rate_limit: 10  # requests per second
+  rate_limit: 10
 
 # Database configuration
 databases:
@@ -84,21 +84,15 @@ os_env:
 env_required:
   - ANTHROPIC_API_KEY
 
-# Search parameters
+# Search parameters optimized for TB research
 search_config:
   default_limit: 50
   max_limit: 500
-  year_range: [2015, 2026]
+  year_range: [2018, 2026]
 
   drug_discovery_keywords:
-    - drug target identification
-    - compound screening
-    - bioactivity assay
-    - drug candidate
-    - lead optimization
-
-# Fallback behavior
-fallback:
-  enabled: true
-  strategy: rule_based
-  log_fallback: true
+    - Mycobacterium tuberculosis drug discovery
+    - anti-tubercular compound screening
+    - MIC assay Mtb
+    - drug-resistant tuberculosis mechanism
+    - DprE1 InhA MmpL3 inhibitor
